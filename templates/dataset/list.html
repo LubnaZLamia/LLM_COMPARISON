@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Dataset · LLM Health Assistant{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Dataset</h1>
+    <p>{{ total }} patient message{{ total|pluralize }}. Reference outputs power the comparison metrics.</p>
+  </div>
+  <div class="actions">
+    <a class="btn-ghost" href="{% url 'dataset:import' %}">Import CSV</a>
+    <a class="btn-ghost" href="{% url 'dataset:export' %}">Export CSV</a>
+    <a class="btn-primary" href="{% url 'dataset:create' %}">+ Add message</a>
+  </div>
+</div>
+
+<form class="card filters" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Search messages…">
+  <select name="category" onchange="this.form.submit()">
+    <option value="">All categories</option>
+    {% for value, label in categories %}
+      <option value="{{ value }}" {% if value == current_category %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn-ghost" type="submit">Filter</button>
+  {% if q or current_category %}<a class="small-link" href="{% url 'dataset:list' %}">Clear</a>{% endif %}
+</form>
+
+<div class="card table-card">
+  <table class="data-table">
+    <thead>
+      <tr><th>Message</th><th>Category</th><th>Follow-up ref.</th><th>Response ref.</th><th>In examples</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for m in items %}
+        <tr>
+          <td class="msg-cell">"{{ m.text|truncatechars:110 }}"</td>
+          <td><span class="chip">{{ m.get_category_display }}</span></td>
+          <td>{% if m.reference_followup %}<span class="yes">Yes</span>{% else %}<span class="no">No</span>{% endif %}</td>
+          <td>{% if m.reference_response %}<span class="yes">Yes</span>{% else %}<span class="no">No</span>{% endif %}</td>
+          <td>{% if m.is_featured %}<span class="yes">Yes</span>{% else %}<span class="no">No</span>{% endif %}</td>
+          <td class="row-actions">
+            <a href="{% url 'dataset:edit' m.pk %}">Edit</a>
+            <a class="danger" href="{% url 'dataset:delete' m.pk %}">Delete</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="empty">No messages found. Add one, import a CSV, or run <code>python manage.py seed_dataset</code>.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+<nav class="pagination">
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}&q={{ q }}&category={{ current_category }}">← Prev</a>{% endif %}
+  <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}&q={{ q }}&category={{ current_category }}">Next →</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

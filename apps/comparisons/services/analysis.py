@@ -1,0 +1,148 @@
+"""Output-based analysis: compares models using only what they produced (no ground truth).
+
+Follow-up questions
+    question_count   how many questions the model asked
+    repeated         questions that are near-duplicates of an earlier question from the same model
+    topics           which clinical areas the questions touch (keyword checklist)
+    agreement        share of the model's questions that at least one other model also asked
+    unique           questions no other model asked
+
+General response
+    word_count       length of the reply
+    grade_level      Flesch-Kincaid US school grade (lower = easier to read; <= 8 is patient-friendly)
+    elements         emergency guidance / points to care team / empathetic language
+    topics           which clinical areas the reply addresses
+
+All checks are heuristic (word overlap and keyword lists). They are a quick, free,
+transparent signal; use the optional judge model for a qualitative score.
+"""
+from __future__ import annotations
+
+import re
+
+from apps.comparisons.models import Task
+
+from .metrics import content_tokens
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+TOPICS = {
+    "Onset & timing": r"\b(when|start|began|begin|how long|long have|since|duration|days?|weeks?|months?|sudden|often|frequen|time of day|constant|come and go)",
+    "Severity": r"\b(severe|severity|scale|mild|moderate|intens|how bad|worse|worsen|getting better|rate)",
+    "Description": r"\b(describe|feel like|what kind|type of|sharp|dull|throbbing|lighthead|spin|vertigo|where|location|itch|look like)",
+    "Medications": r"\b(medication|medicine|dose|dosage|drug|prescri|supplement|pill|antibiotic|taking any|over-the-counter)",
+    "Other symptoms": r"\b(other symptoms|any other|fever|nausea|vomit|rash|swelling|cough|headache|diarrh|fatigue|tired|pain)",
+    "Red flags": r"\b(faint|pass(ed)? out|chest pain|short(ness)? of breath|trouble breathing|confus|weakness|numb|speech|speaking|vision|bleed|blood|fall|911|emergency)",
+    "Medical history": r"\b(history|before|previous|in the past|condition|allerg|diagnos|chronic|surgery|pregnan)",
+    "Impact & self-care": r"\b(daily|activities|sleep|work|tried|helped|relief|rest|fluids|hydrat|eat|drink|diet|exercise)",
+}
+
+ELEMENTS = {
+    "Emergency guidance": r"\b(911|emergency|urgent care|\ber\b|right away|immediately|seek (immediate|urgent) )",
+    "Points to care team": r"\b(call|contact|message|reach out|schedule|book|see|talk|speak|let)\b[^.]{0,50}\b(doctor|provider|care team|office|clinic|nurse|pharmacist|appointment|us|physician|team)\b",
+    "Empathetic language": r"\b(sorry|understand|concern|frustrat|worr|thank you for|thanks for|must be|difficult|uncomfortable)",
+}
+
+_ITEM = re.compile(r"^\s*(?:\d+[.)]|[-*•])\s+(.*)$")
+
+
+def topics_in(text: str) -> list[str]:
+    low = text.lower()
+    return [name for name, pattern in TOPICS.items() if re.search(pattern, low)]
+
+
+def extract_questions(text: str) -> list[str]:
+    """Numbered/bulleted items if present, otherwise sentences ending in '?'."""
+    items = []
+    for line in text.splitlines():
+        m = _ITEM.match(line)
+        if m:
+            items.append(m.group(1).replace("**", "").strip())
+        elif line.strip() and items and not line.strip().endswith(":"):
+            items[-1] += " " + line.strip()
+    if items:
+        return [i for i in items if i]
+    return [s.strip() for s in re.findall(r"[^.?!\n]*\?", text) if s.strip()]
+
+
+def similar(a: set[str], b: set[str], threshold: float = 0.6) -> bool:
+    """Overlap coefficient on content words: shared / size of the smaller set."""
+    if not a or not b:
+        return False
+    shared = len(a & b)
+    smaller = min(len(a), len(b))
+    if smaller <= 2:  # very short questions must match completely
+        return shared == smaller
+    return shared >= 2 and shared / smaller >= threshold
+
+
+def _syllables(word: str) -> int:
+    word = word.lower()
+    if len(word) <= 3:
+        return 1
+    word = re.sub(r"(?:[^laeiouy]es|ed|[^laeiouy]e)$", "", word)
+    word = re.sub(r"^y", "", word)
+    return max(1, len(re.findall(r"[aeiouy]{1,2}", word)))
+
+
+def grade_level(text: str) -> float | None:
+    """Flesch-Kincaid grade level (built in, so no extra dependency)."""
+    words = re.findall(r"[A-Za-z]+(?:'[a-z]+)?", text)
+    sentences = [s for s in re.split(r"[.!?]+(?:\s|$)|\n+", text) if re.search(r"[A-Za-z]", s)]
+    if not words or not sentences:
+        return None
+    syllables = sum(_syllables(w) for w in words)
+    grade = 0.39 * (len(words) / len(sentences)) + 11.8 * (syllables / len(words)) - 15.59
+    return round(max(grade, 0), 1)
+
+
+# ---------------------------------------------------------------------------
+# Per-task analysis
+# ---------------------------------------------------------------------------
+
+def analyze_followups(outputs: dict[int, str]) -> dict[int, dict]:
+    """`outputs` maps an output id to its text. Returns analysis per id."""
+    questions = {k: extract_questions(v) for k, v in outputs.items()}
+    tokens = {k: [content_tokens(q) for q in qs] for k, qs in questions.items()}
+    multiple_models = len(outputs) > 1
+    results = {}
+    for k, qs in questions.items():
+        repeated = []
+        for i, t in enumerate(tokens[k]):
+            if any(similar(t, earlier, threshold=0.8) for earlier in tokens[k][:i]):
+                repeated.append(qs[i])
+
+        shared, unique = [], []
+        for q, t in zip(qs, tokens[k]):
+            others = (ot for other, lst in tokens.items() if other != k for ot in lst)
+            (shared if any(similar(t, o) for o in others) else unique).append(q)
+
+        results[k] = {
+            "question_count": len(qs),
+            "repeated": repeated,
+            "topics": topics_in(" ".join(qs)),
+            "agreement": round(len(shared) / len(qs), 2) if qs and multiple_models else None,
+            "unique": unique if multiple_models else [],
+        }
+    return results
+
+
+def analyze_responses(outputs: dict[int, str]) -> dict[int, dict]:
+    results = {}
+    for k, text in outputs.items():
+        low = text.lower()
+        results[k] = {
+            "word_count": len(re.findall(r"\b[\w'-]+\b", text)),
+            "grade_level": grade_level(text),
+            "elements": [name for name, pattern in ELEMENTS.items() if re.search(pattern, low)],
+            "topics": topics_in(text),
+        }
+    return results
+
+
+def analyze(task: str, outputs: dict[int, str]) -> dict[int, dict]:
+    if not outputs:
+        return {}
+    return analyze_followups(outputs) if task == Task.FOLLOWUP else analyze_responses(outputs)

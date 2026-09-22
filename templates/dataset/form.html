@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} message · LLM Health Assistant{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="small-link" href="{% url 'dataset:list' %}">← Back to dataset</a>
+    <h1>{% if object %}Edit message{% else %}Add message{% endif %}</h1>
+  </div>
+</div>
+
+<form method="post" class="card form-card">
+  {% csrf_token %}
+  {% for field in form %}
+    {% if field.name == "is_featured" %}
+      <label class="check-inline">{{ field }} {{ field.label }}</label>
+    {% else %}
+      <label class="field">
+        <span>{{ field.label }}</span>
+        {{ field }}
+        {% if field.help_text %}<small class="hint">{{ field.help_text }}</small>{% endif %}
+        {% for e in field.errors %}<small class="text-error">{{ e }}</small>{% endfor %}
+      </label>
+    {% endif %}
+  {% endfor %}
+  <div class="actions">
+    <a class="btn-ghost" href="{% url 'dataset:list' %}">Cancel</a>
+    <button class="btn-primary" type="submit">Save</button>
+  </div>
+</form>
+{% endblock %}

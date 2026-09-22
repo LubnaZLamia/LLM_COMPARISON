@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="small-link" href="{% url 'dataset:list' %}">← Back to dataset</a>
+    <h1>Import CSV</h1>
+  </div>
+</div>
+<form method="post" enctype="multipart/form-data" class="card form-card">
+  {% csrf_token %}
+  <p>Upload a UTF-8 CSV with a header row. Columns:</p>
+  <p>{% for f in fields %}<code>{{ f }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+  <p class="hint">Only <code>text</code> is required. <code>category</code> can be a value like <code>medication</code> or a label like <code>Test / Results</code>. Put each reference follow-up question on its own line inside the quoted cell. Tip: export the current dataset to get a template.</p>
+  <label class="field"><span>CSV file</span>{{ form.file }}</label>
+  {% for e in form.file.errors %}<small class="text-error">{{ e }}</small>{% endfor %}
+  <div class="actions">
+    <a class="btn-ghost" href="{% url 'dataset:list' %}">Cancel</a>
+    <button class="btn-primary" type="submit">Import</button>
+  </div>
+</form>
+{% endblock %}

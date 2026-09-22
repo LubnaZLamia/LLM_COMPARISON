@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+{% load outputs %}
+{% block title %}{% if run %}Run #{{ run.pk }} · {% endif %}LLM Health Assistant{% endblock %}
+
+{% block content %}
+{% include "partials/stepper.html" %}
+
+<form method="post" action="{% url 'comparisons:compare' %}" id="compare-form">
+  {% csrf_token %}
+  <input type="hidden" name="source" id="source-input" value="{{ form.source.value|default:'example' }}">
+
+  {% if form.non_field_errors or form.errors %}
+    <div class="flash flash-error">
+      {% for field, errs in form.errors.items %}{% for e in errs %}<div>{{ e }}</div>{% endfor %}{% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="setup-grid">
+    {# ---------------- 1. Patient message ---------------- #}
+    <section class="card">
+      <header class="card-head">
+        <svg class="head-icon c-blue" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>
+        <div><h2>1. Patient Message</h2><p>Select an example from the dataset or write your own.</p></div>
+      </header>
+
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab" data-source="example" role="tab">Example Messages</button>
+        <button type="button" class="tab" data-source="custom" role="tab">Write Your Own</button>
+      </div>
+
+      <div class="tab-panel" data-panel="example">
+        <div class="option-list">
+          {% for ex in examples %}
+            <label class="option {% if selected_message == ex.pk|stringformat:'s' %}selected{% endif %}">
+              <input type="radio" name="message" value="{{ ex.pk }}" {% if selected_message == ex.pk|stringformat:'s' %}checked{% endif %}>
+              <span class="radio-dot"></span>
+              <span class="option-body">
+                <span class="option-text">"{{ ex.text }}"</span>
+                <span class="chip">{{ ex.get_category_display }}</span>
+              </span>
+            </label>
+          {% empty %}
+            <div class="empty">No example messages yet. <a href="{% url 'dataset:create' %}">Add one</a> or run <code>python manage.py seed_dataset</code>.</div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="tab-panel" data-panel="custom" hidden>
+        <label class="field">
+          <span>Patient message</span>
+          <textarea name="custom_text" rows="5" placeholder="e.g. My ankle is still swollen a week after I twisted it.">{{ form.custom_text.value|default:'' }}</textarea>
+        </label>
+        <label class="field">
+          <span>Category</span>
+          <select name="custom_category">
+            {% for value, label in categories %}
+              <option value="{{ value }}" {% if form.custom_category.value == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="check-inline">
+          <input type="checkbox" name="save_to_dataset"> Save this message to the dataset
+        </label>
+      </div>
+    </section>
+
+    {# ---------------- 2. Task ---------------- #}
+    <section class="card">
+      <header class="card-head">
+        <svg class="head-icon c-purple" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h1M12 8h4M8 12h1M12 12h4M8 16h1M12 16h4"/></svg>
+        <div><h2>2. Task</h2><p>Choose what you want the LLMs to generate.</p></div>
+      </header>
+      <div class="option-list">
+        <label class="task-option {% if form.task.value == tasks.FOLLOWUP %}selected{% endif %}">
+          <input type="radio" name="task" value="{{ tasks.FOLLOWUP }}" {% if form.task.value == tasks.FOLLOWUP %}checked{% endif %}>
+          <span class="radio-dot"></span>
+          <span class="task-icon bg-purple">?</span>
+          <span class="option-body"><strong>Generate Follow-up Questions</strong><small>Generate relevant follow-up questions based on the patient message.</small></span>
+        </label>
+        <label class="task-option {% if form.task.value == tasks.RESPONSE %}selected{% endif %}">
+          <input type="radio" name="task" value="{{ tasks.RESPONSE }}" {% if form.task.value == tasks.RESPONSE %}checked{% endif %}>
+          <span class="radio-dot"></span>
+          <span class="task-icon bg-green"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></span>
+          <span class="option-body"><strong>Generate General Response</strong><small>Generate a helpful and appropriate response to the patient message.</small></span>
+        </label>
+      </div>
+    </section>
+
+    {# ---------------- 3. LLMs ---------------- #}
+    <section class="card">
+      <header class="card-head">
+        <svg class="head-icon c-green" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>
+        <div><h2>3. Select LLMs</h2><p>Choose the models you want to compare.</p></div>
+      </header>
+      <div class="option-list">
+        {% for llm in llms %}
+          <label class="model-option">
+            <input type="checkbox" name="models" value="{{ llm.pk }}" {% if llm.pk|stringformat:'s' in selected_models %}checked{% endif %}>
+            <span class="checkbox"></span>
+            <span class="badge" style="--c: {{ llm.color }}">{{ llm.badge_text }}</span>
+            <span>{{ llm.display_name }} <span class="muted">({{ llm.provider }})</span></span>
+          </label>
+        {% empty %}
+          <div class="empty">No models configured. Run <code>python manage.py seed_models</code>.</div>
+        {% endfor %}
+      </div>
+      <label class="judge-toggle">
+        <input type="checkbox" name="use_judge" {% if form.use_judge.value %}checked{% endif %}>
+        <span class="checkbox"></span>
+        <span>
+          <strong>Score with judge model</strong>
+          <small>{% if judge_model %}Another LLM ({{ judge_model }}) rates each output 1–5. One extra API call per model.{% else %}No judge model configured.{% endif %}</small>
+        </span>
+      </label>
+      <button type="submit" class="btn-primary btn-generate">
+        <svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="currentColor" stroke="none"/></svg>
+        Generate Outputs
+      </button>
+      <a class="small-link" href="/admin/llms/llmmodel/">Manage models</a>
+    </section>
+  </div>
+</form>
+
+{# ---------------- 4. Results ---------------- #}
+{% if run %}
+<section class="card results" id="results">
+  <header class="results-head">
+    <div class="card-head">
+      <svg class="head-icon c-blue" viewBox="0 0 24 24"><path d="M5 20V11M10 20V5M15 20v-7M20 20V9M3 20h18"/></svg>
+      <div><h2>4. Model Outputs</h2><p>Compare how each model responds to the same patient message · {{ run.get_task_display }}{% if run.mock_mode %} · <em>mock</em>{% endif %}</p></div>
+    </div>
+    <div class="view-switch">
+      <button type="button" class="seg {% if view_mode != 'table' %}active{% endif %}" data-view="side">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>Side-by-side</button>
+      <button type="button" class="seg {% if view_mode == 'table' %}active{% endif %}" data-view="table">
+        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M3 14h18M9 9v11"/></svg>Table view</button>
+      <a class="seg" href="{% url 'comparisons:download' run.pk %}">
+        <svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M4 19h16"/></svg>Download</a>
+    </div>
+  </header>
+
+  {% if summary.highlights %}
+  <div class="highlights">
+    {% for h in summary.highlights %}
+      <div class="highlight" style="--c: {{ h.color }}">
+        <small>{{ h.label }}</small>
+        <strong>{{ h.names }}</strong>
+        <span>{{ h.value }}</span>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {# Side-by-side #}
+  <div class="view" data-view-panel="side" {% if view_mode == 'table' %}hidden{% endif %}>
+    <div class="output-grid" style="--cols: {{ summary.outputs|length }}">
+      <article class="output-card patient">
+        <header><svg class="head-icon c-blue" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg><h3>Patient Message</h3></header>
+        <div class="patient-quote">
+          <p>"{{ run.message_text }}"</p>
+          <span class="chip">{{ run.get_category_display }}</span>
+        </div>
+      </article>
+      {% for out in summary.outputs %}
+        <article class="output-card" style="--c: {{ out.color }}">
+          <header>
+            <span class="badge">{{ out.llm.badge_text|default:"?" }}</span>
+            <h3>{{ out.model_name }}</h3>
+            {% if out.judge.overall %}<span class="score-pill" title="Judge overall score">{{ out.judge.overall|floatformat:"-2" }}/5</span>{% endif %}
+          </header>
+          <div class="output-body" id="out-{{ out.pk }}">
+            {% if out.error %}
+              <div class="output-error"><strong>Request failed</strong><p>{{ out.error }}</p><small>{{ out.openrouter_id }}</small></div>
+            {% else %}
+              {% with items=out.text|as_items %}
+                {% if items %}
+                  <ol>{% for it in items %}<li>{{ it }}</li>{% endfor %}</ol>
+                {% else %}
+                  {{ out.text|linebreaks }}
+                {% endif %}
+              {% endwith %}
+            {% endif %}
+          </div>
+          {% if not out.error %}
+          <footer>
+            <span class="muted">
+              {% if run.task == tasks.FOLLOWUP %}{{ out.analysis.question_count }} question{{ out.analysis.question_count|pluralize }}{% else %}{{ out.analysis.word_count }} words{% endif %}
+              {% if out.latency_ms %} · {{ out.latency_ms }} ms{% endif %}
+            </span>
+            <button type="button" class="copy-btn" data-copy="out-{{ out.pk }}">
+              <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1"/><path d="M16 8V4H4v12h4"/></svg>Copy</button>
+          </footer>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Table #}
+  <div class="view" data-view-panel="table" {% if view_mode != 'table' %}hidden{% endif %}>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead><tr><th>Model</th><th>Output</th><th>Analysis</th></tr></thead>
+        <tbody>
+          {% for out in summary.outputs %}
+            <tr>
+              <td class="nowrap"><span class="dot" style="background: {{ out.color }}"></span>{{ out.model_name }}<br><small class="muted">{{ out.openrouter_id }}</small></td>
+              <td class="pre output-cell">{% if out.error %}<span class="text-error">{{ out.error }}</span>{% else %}{{ out.text }}{% endif %}</td>
+              <td class="details-cell">
+                {% if out.details %}
+                  <dl class="details">{% for label, value in out.details %}<dt>{{ label }}</dt><dd>{{ value }}</dd>{% endfor %}</dl>
+                {% else %}–{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="metrics">
+  <header class="metrics-head">
+    <div>
+      <h2><svg class="head-icon c-blue" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>Comparison Metrics</h2>
+      <p>The headline measures, from the outputs alone. Full detail per model is in <em>Table view</em>.</p>
+    </div>
+    <div class="metrics-legend">
+      <span><span class="best-dot"></span> best in each metric</span>
+      <a class="small-link" href="{% url 'core:help' %}#metrics">How are these calculated?</a>
+    </div>
+  </header>
+  <div class="metrics-grid">
+    {% for panel in summary.panels %}
+      <div class="card metric {% if panel.placeholder %}metric-off{% endif %}">
+        <h3>{{ panel.label }} {{ panel.arrow }} <span class="info" title="{{ panel.help }}">?</span></h3>
+        {% for row in panel.rows %}
+          <div class="bar-row {% if row.best %}is-best{% endif %}">
+            <span class="bar-label">{{ row.name }}</span>
+            <span class="bar-track"><span class="bar-fill" style="width: {{ row.pct }}%; background: {{ row.color }}"></span></span>
+            <span class="bar-value">{{ row.value }}</span>
+          </div>
+        {% endfor %}
+        <p class="hint">{{ panel.help }}</p>
+      </div>
+    {% empty %}
+      <div class="card metric"><h3>No metrics</h3><p class="hint">None of the models returned an output.</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<div class="loading-overlay" id="loading" hidden>
+  <div class="loading-box"><span class="spinner"></span><p>Asking the models… this can take up to a minute.</p></div>
+</div>
+{% endblock %}

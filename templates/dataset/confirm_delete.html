@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card form-card">
+  <h1>Delete message?</h1>
+  <p>"{{ object.text }}"</p>
+  <p class="hint">Past comparison runs are kept, but will no longer link to this message.</p>
+  <form method="post" class="actions">
+    {% csrf_token %}
+    <a class="btn-ghost" href="{% url 'dataset:list' %}">Cancel</a>
+    <button class="btn-danger" type="submit">Delete</button>
+  </form>
+</div>
+{% endblock %}

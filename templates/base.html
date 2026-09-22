@@ -1,0 +1,53 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}LLM Health Assistant{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'comparisons:compare' %}">
+      <svg class="brand-logo" viewBox="0 0 48 48" aria-hidden="true">
+        <path d="M24 43S5 31.5 5 17.5C5 11 10 6 16 6c3.6 0 6.3 1.8 8 4.4C25.7 7.8 28.4 6 32 6c6 0 11 5 11 11.5C43 31.5 24 43 24 43z" fill="currentColor"/>
+        <path d="M9 24h9l3-6 5 12 3-6h10" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>
+        <strong>LLM Health Assistant</strong>
+        <small>Explore and compare how different LLMs respond to patient messages</small>
+      </span>
+    </a>
+    <nav class="nav">
+      {% with p=request.path %}
+      <a href="{% url 'comparisons:compare' %}" class="{% if p == '/' or '/runs/' in p %}active{% endif %}">
+        <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Home</a>
+      <a href="{% url 'dataset:list' %}" class="{% if '/dataset/' in p %}active{% endif %}">
+        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>Dataset</a>
+      <a href="{% url 'core:help' %}" class="{% if '/help/' in p %}active{% endif %}">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14M12 17.5v.01"/></svg>Help</a>
+      {% endwith %}
+    </nav>
+  </header>
+
+  {% if mock_mode %}
+    <div class="banner banner-info">Mock mode is on: models return canned answers and no API calls are made. Set <code>LLM_MOCK_MODE=false</code> in <code>.env</code> to use real models.</div>
+  {% elif not api_key_configured %}
+    <div class="banner banner-warn">No OpenRouter API key found. Add <code>OPENROUTER_API_KEY</code> to your <code>.env</code> file (see <a href="{% url 'core:help' %}#setup">Help</a>), or set <code>LLM_MOCK_MODE=true</code> to try the app.</div>
+  {% endif %}
+
+  <main class="container">
+    {% if messages %}
+      <div class="flash-stack">
+        {% for m in messages %}<div class="flash flash-{{ m.tags }}">{{ m }}</div>{% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{% static 'js/app.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
