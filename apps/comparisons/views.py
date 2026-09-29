@@ -12,7 +12,7 @@ from .forms import CompareForm
 from .models import ComparisonRun, Task
 from .services import summary
 from .services.judge import judge_model_id
-from .services.runner import run_comparison
+from .services.runner import retry_failed, run_comparison
 
 
 def compare(request, pk=None):
@@ -51,7 +51,7 @@ def compare(request, pk=None):
 
     selected_models = {str(getattr(m, "pk", m)) for m in (form["models"].value() or [])}
     selected_message = str(form["message"].value() or "")
-    featured = PatientMessage.objects.filter(is_featured=True)
+    featured = PatientMessage.objects.filter(is_featured=True).order_by("-reference_followup", "category", "id")
     if not selected_message and form["source"].value() != CompareForm.SOURCE_CUSTOM and featured.exists():
         selected_message = str(featured.first().pk)
 
@@ -72,18 +72,35 @@ def compare(request, pk=None):
     return render(request, "comparisons/compare.html", context)
 
 
+def retry_run(request, pk):
+    """Re-run only the models that failed, and merge the results into the same run."""
+    run = get_object_or_404(ComparisonRun, pk=pk)
+    if request.method == "POST":
+        names = retry_failed(run)
+        if names:
+            still_failing = [o.model_name for o in run.outputs.all() if o.error]
+            if still_failing:
+                messages.warning(request, "Still failing: " + ", ".join(still_failing))
+            else:
+                messages.success(request, "Retried " + ", ".join(names) + " — all models answered.")
+    return redirect(reverse("comparisons:run", args=[run.pk]) + "#results")
+
+
 def download_run(request, pk):
     run = get_object_or_404(ComparisonRun.objects.prefetch_related("outputs__llm"), pk=pk)
     data = summary.build(run)
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = f'attachment; filename="comparison_run_{run.pk}.csv"'
     writer = csv.writer(response)
-    writer.writerow(["run_id", "created_at", "task", "category", "patient_message", "model", "openrouter_id",
-                     "latency_ms", "output", "error", "analysis", "judge_model", "judge_overall"])
+    writer.writerow(["run_id", "created_at", "task", "category", "patient_message", "ehr_summary", "model",
+                     "openrouter_id", "latency_ms", "output", "error", "ground_truth_score", "ground_truth_matched",
+                     "analysis", "judge_model", "judge_overall"])
     for o in data["outputs"]:
         writer.writerow([
             run.pk, run.created_at.isoformat(), run.get_task_display(), run.get_category_display(), run.message_text,
-            o.model_name, o.openrouter_id, o.latency_ms, o.text, o.error,
+            run.ehr_summary, o.model_name, o.openrouter_id, o.latency_ms, o.text, o.error,
+            (o.analysis or {}).get("gt_score", ""),
+            f"{(o.analysis or {}).get('gt_matched', '')}/{(o.analysis or {}).get('gt_total', '')}".strip("/"),
             " | ".join(f"{k}: {v}" for k, v in o.details),
             run.judge_model, (o.judge or {}).get("overall", ""),
         ])

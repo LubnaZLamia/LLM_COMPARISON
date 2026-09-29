@@ -2,23 +2,25 @@
 {% block title %}Help · LLM Health Assistant{% endblock %}
 
 {% block content %}
-<div class="page-head"><div><h1>Help</h1><p>How to use the app and how the metrics work.</p></div></div>
+<div class="page-head"><div><p class="eyebrow">Reference</p><h1>Help</h1><p>How to use the app, and what every number means.</p></div></div>
 
 <div class="help-grid">
   <section class="card prose">
-    <h2>Using the app</h2>
+    <h2><svg class="ico"><use href="#i-play"></use></svg>Using the app</h2>
     <ol>
       <li><strong>Patient Message:</strong> pick an example from the dataset, or write your own.</li>
       <li><strong>Task:</strong> ask the models for follow-up questions or a general reply.</li>
       <li><strong>Select LLMs:</strong> tick the models to compare. They all get the same prompt. Optionally tick <em>Score with judge model</em>.</li>
       <li><strong>Generate Outputs:</strong> the models are called in parallel. Each run gets its own link you can bookmark.</li>
+      <li><strong>Rate (optional):</strong> send the run to the <a href="{% url 'ratings:list' %}">Rate</a> page for blind clinician scoring.</li>
     </ol>
     <p>The highlight tiles show the leader in each metric. <em>Table view</em> shows the full analysis per model, and <em>Download</em> exports the run as CSV.</p>
+    <p><strong>If a model fails.</strong> Rate limits (HTTP 429) and provider hiccups are retried automatically up to 3 times. If a model still fails, its card shows why and a <em>Retry failed</em> button re-runs only that model and merges the answer into the same run.</p>
     <p class="hint">This is a research tool. Outputs are not medical advice and should be reviewed by a clinician.</p>
   </section>
 
   <section class="card prose" id="metrics">
-    <h2>Metrics (no ground truth needed)</h2>
+    <h2><svg class="ico"><use href="#i-chart"></use></svg>Metrics (no ground truth needed)</h2>
     <p>Three headline metrics per task, shown as bars with the leader marked. Everything else is in <em>Table view</em>.</p>
     <p><strong>Follow-up questions</strong></p>
     <dl>
@@ -32,6 +34,14 @@
       <dt>Reading Grade Level ↓</dt><dd>Flesch-Kincaid US school grade. 8 or below is usually recommended for patient materials.</dd>
       <dt>Key Elements ↑</dt><dd>Does the reply give emergency guidance, point the patient to their care team, and sound empathetic?</dd>
     </dl>
+    <p><strong>Ground truth (dataset messages only)</strong></p>
+    <dl>
+      <dt>Clinician Questions Matched ↑</dt><dd>For the questions task: the share of the clinician's own follow-up questions that the model also asked. One broad question ("any nausea or vomiting?") can cover two of the clinician's, and counts for both.</dd>
+      <dt>Clinician Reply Coverage ↑</dt><dd>For the response task: the share of the points in the clinician's own reply that the model's reply also covers.</dd>
+    </dl>
+    <p>This card only appears when the selected message carries clinician ground truth — the green badges in the example list show which do. Table view lists exactly what each model missed. Matching is by shared wording; make it stricter or looser with <code>GT_MATCH_RECALL</code> in <code>.env</code> (0.5 by default).</p>
+    <p>When a message has a chart summary, it is sent to every model (and to the judge) along with the message, so they work from the same information the clinician had. The results page shows it under the patient message.</p>
+
     <p><strong>Judge score (optional)</strong></p>
     <p>Tick <em>Score with judge model</em> and another LLM rates each output 1 to 5. Follow-up questions are rated on relevance, comprehensiveness, safety and clarity; replies on comprehensiveness, safety, empathy and clarity. The bar shows the average, and the table view shows each score plus the judge's reasoning. A judge can favour its own style, so it's best to pick a judge that isn't one of the models being compared.</p>
     <p><strong>In the table view</strong></p>
@@ -39,21 +49,36 @@
     <p class="hint">Word matching and keyword checks are quick and transparent, but they can miss paraphrases. The logic is in <code>apps/comparisons/services/analysis.py</code>.</p>
   </section>
 
+  <section class="card prose" id="rating">
+    <h2><svg class="ico"><use href="#i-star"></use></svg>Clinician rating</h2>
+    <p>The <a href="{% url 'ratings:list' %}">Rate</a> page collects human scores for outputs you have already generated.</p>
+    <ol>
+      <li>Type your name or initials once, then press Continue. It is stored with each rating so you can compare raters later — it is not a login.</li>
+      <li>Pick a run from the list. Outputs appear as <strong>Model A, B, C</strong> in an order shuffled for you, so brand names can't sway the scores.</li>
+      <li>Score each output 1–5 on fluency, coherence, relevance, factual correctness, completeness and safety, with an optional comment.</li>
+      <li>Save, and the real model names are revealed alongside your scores.</li>
+    </ol>
+    <p>Averages across raters appear as a <strong>Clinician Score</strong> card on the run's results page, and <em>Download ratings CSV</em> gives one row per rater per output for agreement analysis.</p>
+    <p class="hint">Rating the same run again updates your scores rather than adding duplicates. Every dimension needs a score before a run can be saved.</p>
+  </section>
+
   <section class="card prose" id="setup">
-    <h2>Setup</h2>
+    <h2><svg class="ico"><use href="#i-sliders"></use></svg>Setup</h2>
     <ol>
       <li>Create a key at <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai/keys</a> and add a few dollars of credit.</li>
       <li>Double-click <code>run.bat</code>. The first time, it asks for your key and saves it to <code>.env</code>.</li>
     </ol>
     <p>To change the key later, edit <code>OPENROUTER_API_KEY</code> in <code>.env</code> and restart.</p>
+    <p>Each model carries a small shape badge in its own colour so you can follow it from the picker to the cards, the bars and the tables. The shapes are plain geometry, not company logos — the shape comes from the provider name and the colour from <em>Colour</em> in <a href="/admin/llms/llmmodel/">admin</a>.</p>
     <p>Each start, the app replaces model ids that OpenRouter has retired. To jump to the newest models on purpose, run <code>python manage.py seed_models --refresh</code>, or edit them in <a href="/admin/llms/llmmodel/">admin</a>.</p>
   </section>
 
   <section class="card prose">
-    <h2>Where to change things</h2>
+    <h2><svg class="ico"><use href="#i-pencil"></use></svg>Where to change things</h2>
     <ul>
       <li>Prompts and judge criteria: <code>apps/comparisons/services/prompts.py</code></li>
-      <li>Metrics: <code>apps/comparisons/services/analysis.py</code></li>
+      <li>Metrics and ground-truth matching: <code>apps/comparisons/services/analysis.py</code></li>
+      <li>Dataset import: <code>python manage.py import_datasets --questions data/questions.csv --responses data/responses.csv</code></li>
       <li>Temperature, max tokens, judge model: <code>.env</code></li>
       <li>Models: <a href="/admin/llms/llmmodel/">Admin → LLM models</a></li>
       <li>Past runs: <a href="/admin/comparisons/comparisonrun/">Admin → Comparison runs</a></li>

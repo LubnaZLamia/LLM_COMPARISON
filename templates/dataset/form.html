@@ -5,7 +5,9 @@
 <div class="page-head">
   <div>
     <a class="small-link" href="{% url 'dataset:list' %}">← Back to dataset</a>
+    <p class="eyebrow">Dataset</p>
     <h1>{% if object %}Edit message{% else %}Add message{% endif %}</h1>
+    <p>Reference answers are optional — add them to score models against this message.</p>
   </div>
 </div>
 
@@ -23,9 +25,9 @@
       </label>
     {% endif %}
   {% endfor %}
-  <div class="actions">
+  <div class="form-actions">
     <a class="btn-ghost" href="{% url 'dataset:list' %}">Cancel</a>
-    <button class="btn-primary" type="submit">Save</button>
+    <button class="btn-primary" type="submit"><svg class="ico"><use href="#i-check"></use></svg>Save message</button>
   </div>
 </form>
 {% endblock %}

@@ -13,7 +13,8 @@ SYSTEM_PROMPTS = {
         "Rules:\n"
         "- Ask as many questions as you think are needed, and no more.\n"
         "- Output a numbered list (1., 2., ...), one short plain-language question per line.\n"
-        "- No introduction, explanation, or closing text."
+        "- No introduction, explanation, or closing text.\n"
+        "- If a chart summary is provided, take it into account."
     ),
     Task.RESPONSE: (
         "You are a clinical assistant drafting a reply to a patient portal message on behalf of a "
@@ -21,15 +22,21 @@ SYSTEM_PROMPTS = {
         "Rules:\n"
         "- Do not diagnose or change treatment; recommend contacting the care team where appropriate.\n"
         "- Clearly state when to seek emergency care if red-flag symptoms are possible.\n"
-        "- No sign-off or placeholders like [Name]."
+        "- No sign-off or placeholders like [Name].\n"
+        "- If a chart summary is provided, take it into account."
     ),
 }
 
 
-def build_prompts(task: str, message: str) -> tuple[str, str]:
+def build_prompts(task: str, message: str, ehr: str = "") -> tuple[str, str]:
+    """System + user prompt. When the dataset has chart context, the models see it too,
+    so they work from the same information the clinician had."""
     system = SYSTEM_PROMPTS[Task(task)]
-    user = f'Patient message:\n"""{message.strip()}"""'
-    return system, user
+    parts = []
+    if ehr.strip():
+        parts.append(f'Patient chart summary:\n"""{ehr.strip()}"""')
+    parts.append(f'Patient message:\n"""{message.strip()}"""')
+    return system, "\n\n".join(parts)
 
 
 # --- Judge ----------------------------------------------------------------
@@ -50,7 +57,7 @@ JUDGE_CRITERIA = {
 }
 
 
-def build_judge_prompts(task: str, message: str, output: str) -> tuple[str, str]:
+def build_judge_prompts(task: str, message: str, output: str, ehr: str = "") -> tuple[str, str]:
     criteria = JUDGE_CRITERIA[Task(task)]
     criteria_text = "\n".join(f'- "{k}": {v}' for k, v in criteria.items())
     keys = ", ".join(f'"{k}": <1-5>' for k in criteria)
@@ -62,8 +69,10 @@ def build_judge_prompts(task: str, message: str, output: str) -> tuple[str, str]
         "Reply with ONLY a JSON object, no markdown:\n"
         f'{{"scores": {{{keys}}}, "rationale": "<one or two sentences>"}}'
     )
+    chart = f'Patient chart summary:\n"""{ehr.strip()}"""\n\n' if ehr.strip() else ""
     user = (
         f"Task: {task_label}\n\n"
+        f"{chart}"
         f'Patient message:\n"""{message.strip()}"""\n\n'
         f'AI output to evaluate:\n"""{output.strip()}"""'
     )

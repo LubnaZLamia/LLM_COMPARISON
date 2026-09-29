@@ -12,7 +12,7 @@ N_TOPICS = len(TOPICS)
 N_ELEMENTS = len(ELEMENTS)
 
 
-def _panel(outputs, *, label, help, value, display, direction=None, scale=None, detail=None):
+def _panel(outputs, *, label, help, value, display, direction=None, scale=None, icon="chart", detail=None):
     """Build one metric panel.
 
     value(out) -> number or None; display(v) -> str; direction: 'higher' | 'lower' | None;
@@ -23,7 +23,8 @@ def _panel(outputs, *, label, help, value, display, direction=None, scale=None, 
         v = value(out)
         if v is None:
             continue
-        rows.append({"name": out.model_name, "color": out.color, "raw": v, "value": display(v)})
+        rows.append({"name": out.model_name, "color": out.color, "mark": out.mark, "ink": out.ink,
+                     "raw": v, "value": display(v)})
     if not rows:
         return None
     top = scale or max(r["raw"] for r in rows) or 1
@@ -35,7 +36,7 @@ def _panel(outputs, *, label, help, value, display, direction=None, scale=None, 
             for r in rows:
                 r["best"] = r["raw"] == best
     arrow = {"higher": "↑", "lower": "↓"}.get(direction, "")
-    return {"label": label, "arrow": arrow, "help": help, "rows": rows}
+    return {"label": label, "arrow": arrow, "help": help, "rows": rows, "icon": icon}
 
 
 def _a(key):
@@ -55,8 +56,10 @@ def _winner(outputs, value, pick=max, fmt=str):
     best = pick(v for _, v in vals)
     winners = [o for o, v in vals if v == best]
     names = "All models tied" if len(winners) == len(vals) else " & ".join(o.model_name for o in winners)
-    color = winners[0].color if len(winners) < len(vals) else "#64748b"
-    return {"names": names, "value": fmt(best), "color": color}
+    tile = {"names": names, "value": fmt(best)}
+    if len(winners) == 1:  # one clear winner: show its mark on the tile
+        tile |= {"mark": winners[0].mark, "ink": winners[0].ink}
+    return tile
 
 
 def build(run) -> dict:
@@ -68,56 +71,94 @@ def build(run) -> dict:
     # topic lists, per-criterion judge scores) lives in the table view.
     if run.task == Task.FOLLOWUP:
         highlights += [
-            ("Asked the most", _winner(ok, _a("question_count"), fmt=lambda v: f"{v} questions")),
-            ("Covered the most ground", _winner(ok, _len_of("topics"), fmt=lambda v: f"{v} of {N_TOPICS} topics")),
-            ("Most in agreement", _winner(ok, _a("agreement"), fmt=lambda v: f"{v:.0%} shared")),
+            ("Asked the most", "help", _winner(ok, _a("question_count"), fmt=lambda v: f"{v} questions")),
+            ("Covered the most ground", "grid", _winner(ok, _len_of("topics"), fmt=lambda v: f"{v} of {N_TOPICS} topics")),
+            ("Most in agreement", "users", _winner(ok, _a("agreement"), fmt=lambda v: f"{v:.0%} shared")),
         ]
         panels += [
-            _panel(ok, label="Questions Asked", value=_a("question_count"), display=str,
+            _panel(ok, label="Questions Asked", icon="help", value=_a("question_count"), display=str,
                    help="How many follow-up questions the model asked. More isn't always better."),
-            _panel(ok, label="Topics Covered", direction="higher", scale=N_TOPICS, value=_len_of("topics"),
+            _panel(ok, label="Topics Covered", icon="grid", direction="higher", scale=N_TOPICS, value=_len_of("topics"),
                    display=lambda v: f"{v}/{N_TOPICS}",
                    help="How many of 8 clinical areas the questions touch: timing, severity, description, medications, other symptoms, red flags, history, daily impact."),
-            _panel(ok, label="Agreement with Other Models", direction="higher", scale=1, value=_a("agreement"),
+            _panel(ok, label="Agreement", icon="users", direction="higher", scale=1, value=_a("agreement"),
                    display=lambda v: f"{v:.0%}",
                    help="Share of this model's questions that another model also asked. High means it stuck to the obvious questions; low means it went its own way."),
         ]
     else:
         highlights += [
-            ("Longest reply", _winner(ok, _a("word_count"), fmt=lambda v: f"{v} words")),
-            ("Easiest to read", _winner(ok, _a("grade_level"), pick=min, fmt=lambda v: f"grade {v}")),
-            ("Most complete", _winner(ok, _len_of("elements"), fmt=lambda v: f"{v} of {N_ELEMENTS} elements")),
+            ("Longest reply", "ruler", _winner(ok, _a("word_count"), fmt=lambda v: f"{v} words")),
+            ("Easiest to read", "book", _winner(ok, _a("grade_level"), pick=min, fmt=lambda v: f"grade {v}")),
+            ("Most complete", "shield", _winner(ok, _len_of("elements"), fmt=lambda v: f"{v} of {N_ELEMENTS} elements")),
         ]
         panels += [
-            _panel(ok, label="Response Length (words)", value=_a("word_count"), display=str,
+            _panel(ok, label="Reply Length", icon="ruler", value=_a("word_count"), display=lambda v: f"{v} w",
                    help="Word count of the reply."),
-            _panel(ok, label="Reading Grade Level", direction="lower", scale=16, value=_a("grade_level"),
+            _panel(ok, label="Reading Level", icon="book", direction="lower", scale=16, value=_a("grade_level"),
                    display=lambda v: f"{v}",
                    help="US school grade needed to read the reply (Flesch-Kincaid). 8 or below is patient-friendly."),
-            _panel(ok, label="Key Elements", direction="higher", scale=N_ELEMENTS, value=_len_of("elements"),
+            _panel(ok, label="Key Elements", icon="shield", direction="higher", scale=N_ELEMENTS, value=_len_of("elements"),
                    display=lambda v: f"{v}/{N_ELEMENTS}",
                    help="Does the reply give emergency guidance, point the patient to their care team, and sound empathetic?"),
         ]
 
-    judged = [o for o in ok if o.judge and "overall" in o.judge]
-    if judged:
-        criteria = ", ".join(JUDGE_CRITERIA[run.task])
-        highlights.append(("Top judge score", _winner(judged, lambda o: o.judge["overall"], fmt=lambda v: f"{v:g} of 5")))
-        panels.append(_panel(judged, label="Judge Score", direction="higher", scale=5,
-                             value=lambda o: o.judge["overall"], display=lambda v: f"{v:g}/5",
-                             help=f"{run.judge_model} rated each output 1–5 on {criteria}. This is the average; "
-                                  f"the table view shows each score and the judge's reasoning."))
+    # Clinician ratings, if anyone has rated this run on the Rate page.
+    from apps.ratings.services import summary as rating_summary
 
-    if settings.SHOW_REFERENCE_METRICS and run.has_reference:
-        panels += [
-            _panel(ok, label="Reference Coverage", direction="higher", scale=1, value=lambda o: o.reference_coverage,
-                   display=lambda v: f"{v:.2f}", help="Fraction of key reference points covered by the model."),
-            _panel(ok, label="Missing Key Information", direction="lower", scale=1, value=lambda o: o.missing_key_info,
-                   display=lambda v: f"{v:.2f}", help="Fraction of reference points not addressed."),
-        ]
+    human = rating_summary.panel(run)
+    if human:
+        panels.append(human)
+        best = max(human["rows"], key=lambda r: r["raw"])
+        if len(human["rows"]) > 1:
+            highlights.append(("Clinicians' pick", "trophy", {
+                "names": best["name"], "value": f"{best['raw']:g} of 5",
+                "mark": best["mark"], "ink": best["ink"],
+            }))
+
+    # Judge Score is always the fourth card, so it's clear the option exists.
+    judged = [o for o in ok if o.judge and "overall" in o.judge]
+    criteria = ", ".join(JUDGE_CRITERIA[run.task])
+    if judged:
+        highlights.append(("Top judge score", "scale", _winner(judged, lambda o: o.judge["overall"], fmt=lambda v: f"{v:g} of 5")))
+        panels.append(_panel(judged, label="Judge Score", icon="scale", direction="higher", scale=5,
+                             value=lambda o: o.judge["overall"], display=lambda v: f"{v:g}/5",
+                             help=f"Another LLM ({run.judge_model}) rated each output 1–5 on {criteria}. "
+                                  f"Table view shows each score and the judge's reasoning."))
+    else:
+        panels.append({
+            "label": "Judge Score", "arrow": "↑", "rows": [], "placeholder": True, "icon": "scale",
+            "help": f"Not scored for this run. Tick “Score with judge model” before generating and another LLM "
+                    f"rates each output 1–5 on {criteria}. It costs one extra API call per model.",
+        })
+
+    # Ground truth: a card either way, so it is never a mystery why it is missing.
+    gt_label = "Clinician Match"
+    if run.has_reference and any(o.analysis.get("gt_score") is not None for o in ok):
+        gt_help = (
+            "Share of this patient's clinician-written follow-up questions that the model also asked. "
+            "Table view lists the ones each model missed."
+            if run.task == Task.FOLLOWUP else
+            "Share of the points in the clinician's own reply that the model's reply also covers. "
+            "Table view lists what each model left out."
+        )
+        panels.insert(0, _panel(ok, label=gt_label, icon="target", direction="higher", scale=1, value=_a("gt_score"),
+                                display=lambda v: f"{v:.0%}", help=gt_help))
+        highlights.insert(0, ("Closest to the clinician", "target", _winner(ok, _a("gt_score"), fmt=lambda v: f"{v:.0%} match")))
+    else:
+        missing = ("This message has no clinician reply in the dataset, so there is nothing to compare against. "
+                   "Pick a message with the green “Reply ground truth” badge."
+                   if run.task == Task.RESPONSE else
+                   "This message has no clinician questions in the dataset, so there is nothing to compare against. "
+                   "Pick a message with the green “Q ground truth” badge.")
+        if not run.source_message_id:
+            missing = "You wrote this message yourself, so there is no clinician answer to compare against."
+        panels.insert(0, {"label": gt_label, "arrow": "↑", "rows": [], "placeholder": True, "icon": "target", "help": missing})
 
     return {
-        "highlights": [{"label": label, **w} for label, w in highlights if w],
+        "has_human_ratings": bool(human),
+        "has_ground_truth": run.has_reference,
+        "has_failures": any(o.error for o in outputs),
+        "highlights": [{"label": label, "icon": icon, **w} for label, icon, w in highlights if w],
         "panels": [p for p in panels if p],
         "outputs": [_with_details(run, o) for o in outputs],
     }
@@ -133,6 +174,11 @@ def details_for(run, out) -> list[tuple[str, str]]:
     a, rows = out.analysis or {}, []
     if not a:
         return rows
+    if a.get("gt_score") is not None:
+        label = "Clinician questions matched" if run.task == Task.FOLLOWUP else "Clinician reply covered"
+        rows.append((label, f"{a['gt_matched']}/{a['gt_total']} ({a['gt_score']:.0%})"))
+        if a.get("gt_missed"):
+            rows.append(("Missed from ground truth", " · ".join(a["gt_missed"])))
     if run.task == Task.FOLLOWUP:
         rows.append(("Questions", str(a.get("question_count", 0))))
         rows.append(("Topics", ", ".join(a.get("topics", [])) or "none"))

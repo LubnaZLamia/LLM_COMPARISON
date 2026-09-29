@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load outputs %}
+{% load outputs marks %}
 {% block title %}{% if run %}Run #{{ run.pk }} · {% endif %}LLM Health Assistant{% endblock %}
 
 {% block content %}
@@ -19,7 +19,7 @@
     {# ---------------- 1. Patient message ---------------- #}
     <section class="card">
       <header class="card-head">
-        <svg class="head-icon c-blue" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>
+        <svg class="head-icon"><use href="#i-message"></use></svg>
         <div><h2>1. Patient Message</h2><p>Select an example from the dataset or write your own.</p></div>
       </header>
 
@@ -29,14 +29,25 @@
       </div>
 
       <div class="tab-panel" data-panel="example">
-        <div class="option-list">
+        <div class="input-icon"><svg class="ico"><use href="#i-search"></use></svg>
+        <input type="search" class="example-search" id="example-search" placeholder="Search {{ examples|length }} messages…" autocomplete="off"></div>
+        <div class="list-tools">
+          <label class="gt-filter"><input type="checkbox" id="gt-only"> Ground truth only</label>
+          <span class="hint search-hint" id="search-count"></span>
+        </div>
+        <div class="option-list" id="example-list">
           {% for ex in examples %}
-            <label class="option {% if selected_message == ex.pk|stringformat:'s' %}selected{% endif %}">
+            <label class="option {% if selected_message == ex.pk|stringformat:'s' %}selected{% endif %}" data-search="{{ ex.text|lower }}" data-gt-followup="{% if ex.reference_followup %}1{% else %}0{% endif %}" data-gt-response="{% if ex.reference_response %}1{% else %}0{% endif %}">
               <input type="radio" name="message" value="{{ ex.pk }}" {% if selected_message == ex.pk|stringformat:'s' %}checked{% endif %}>
               <span class="radio-dot"></span>
               <span class="option-body">
-                <span class="option-text">"{{ ex.text }}"</span>
-                <span class="chip">{{ ex.get_category_display }}</span>
+                <span class="option-text">"{{ ex.text|truncatechars:150 }}"</span>
+                <span class="chips">
+                  <span class="chip">{{ ex.get_category_display }}</span>
+                  {% if ex.reference_followup %}<span class="chip chip-gt" title="Clinician follow-up questions available">Q</span>{% endif %}
+                  {% if ex.reference_response %}<span class="chip chip-gt" title="Clinician reply available">Reply</span>{% endif %}
+                  {% if ex.ehr_summary %}<span class="chip chip-ehr" title="Chart summary available">EHR</span>{% endif %}
+                </span>
               </span>
             </label>
           {% empty %}
@@ -67,20 +78,20 @@
     {# ---------------- 2. Task ---------------- #}
     <section class="card">
       <header class="card-head">
-        <svg class="head-icon c-purple" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h1M12 8h4M8 12h1M12 12h4M8 16h1M12 16h4"/></svg>
+        <svg class="head-icon"><use href="#i-list"></use></svg>
         <div><h2>2. Task</h2><p>Choose what you want the LLMs to generate.</p></div>
       </header>
       <div class="option-list">
         <label class="task-option {% if form.task.value == tasks.FOLLOWUP %}selected{% endif %}">
           <input type="radio" name="task" value="{{ tasks.FOLLOWUP }}" {% if form.task.value == tasks.FOLLOWUP %}checked{% endif %}>
           <span class="radio-dot"></span>
-          <span class="task-icon bg-purple">?</span>
+          <span class="task-icon">?</span>
           <span class="option-body"><strong>Generate Follow-up Questions</strong><small>Generate relevant follow-up questions based on the patient message.</small></span>
         </label>
         <label class="task-option {% if form.task.value == tasks.RESPONSE %}selected{% endif %}">
           <input type="radio" name="task" value="{{ tasks.RESPONSE }}" {% if form.task.value == tasks.RESPONSE %}checked{% endif %}>
           <span class="radio-dot"></span>
-          <span class="task-icon bg-green"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></span>
+          <span class="task-icon"><svg class="ico"><use href="#i-message"></use></svg></span>
           <span class="option-body"><strong>Generate General Response</strong><small>Generate a helpful and appropriate response to the patient message.</small></span>
         </label>
       </div>
@@ -89,7 +100,7 @@
     {# ---------------- 3. LLMs ---------------- #}
     <section class="card">
       <header class="card-head">
-        <svg class="head-icon c-green" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>
+        <svg class="head-icon"><use href="#i-sliders"></use></svg>
         <div><h2>3. Select LLMs</h2><p>Choose the models you want to compare.</p></div>
       </header>
       <div class="option-list">
@@ -97,8 +108,8 @@
           <label class="model-option">
             <input type="checkbox" name="models" value="{{ llm.pk }}" {% if llm.pk|stringformat:'s' in selected_models %}checked{% endif %}>
             <span class="checkbox"></span>
-            <span class="badge" style="--c: {{ llm.color }}">{{ llm.badge_text }}</span>
-            <span>{{ llm.display_name }} <span class="muted">({{ llm.provider }})</span></span>
+            {% model_mark llm %}
+            <span class="model-name">{{ llm.display_name }}<small>{{ llm.provider }}</small></span>
           </label>
         {% empty %}
           <div class="empty">No models configured. Run <code>python manage.py seed_models</code>.</div>
@@ -113,7 +124,7 @@
         </span>
       </label>
       <button type="submit" class="btn-primary btn-generate">
-        <svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="currentColor" stroke="none"/></svg>
+        <svg class="ico ico-solid"><use href="#i-play"></use></svg>
         Generate Outputs
       </button>
       <a class="small-link" href="/admin/llms/llmmodel/">Manage models</a>
@@ -126,25 +137,36 @@
 <section class="card results" id="results">
   <header class="results-head">
     <div class="card-head">
-      <svg class="head-icon c-blue" viewBox="0 0 24 24"><path d="M5 20V11M10 20V5M15 20v-7M20 20V9M3 20h18"/></svg>
-      <div><h2>4. Model Outputs</h2><p>Compare how each model responds to the same patient message · {{ run.get_task_display }}{% if run.mock_mode %} · <em>mock</em>{% endif %}</p></div>
+      <svg class="head-icon"><use href="#i-chart"></use></svg>
+      <div><h2>4. Model Outputs</h2><p>{{ run.get_task_display }} · {{ summary.outputs|length }} model{{ summary.outputs|length|pluralize }}{% if run.mock_mode %} · <em>mock</em>{% endif %}</p></div>
     </div>
     <div class="view-switch">
       <button type="button" class="seg {% if view_mode != 'table' %}active{% endif %}" data-view="side">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg>Side-by-side</button>
+        <svg class="ico"><use href="#i-grid"></use></svg>Side-by-side</button>
       <button type="button" class="seg {% if view_mode == 'table' %}active{% endif %}" data-view="table">
-        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M3 9h18M3 14h18M9 9v11"/></svg>Table view</button>
+        <svg class="ico"><use href="#i-table"></use></svg>Table view</button>
+      {% if summary.has_failures %}
+        <form method="post" action="{% url 'comparisons:retry' run.pk %}" class="retry-form" id="retry-form">
+          {% csrf_token %}
+          <button type="submit" class="seg seg-retry">
+            <svg class="ico"><use href="#i-refresh"></use></svg>Retry failed</button>
+        </form>
+      {% endif %}
+      <a class="seg" href="{% url 'ratings:rate' run.pk %}">
+        <svg class="ico"><use href="#i-star"></use></svg>{% if summary.has_human_ratings %}Rate again{% else %}Rate{% endif %}</a>
       <a class="seg" href="{% url 'comparisons:download' run.pk %}">
-        <svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M4 19h16"/></svg>Download</a>
+        <svg class="ico"><use href="#i-download"></use></svg>Download</a>
     </div>
   </header>
 
   {% if summary.highlights %}
   <div class="highlights">
     {% for h in summary.highlights %}
-      <div class="highlight" style="--c: {{ h.color }}">
-        <small>{{ h.label }}</small>
-        <strong>{{ h.names }}</strong>
+      <div class="highlight">
+        <small><svg class="ico"><use href="#i-{{ h.icon|default:'trophy' }}"></use></svg>{{ h.label }}</small>
+        <strong>
+          {% if h.mark %}<svg class="ico row-mark" style="--row-ink: {{ h.ink }}"><use href="#i-mark-{{ h.mark }}"></use></svg>{% endif %}{{ h.names }}
+        </strong>
         <span>{{ h.value }}</span>
       </div>
     {% endfor %}
@@ -155,22 +177,35 @@
   <div class="view" data-view-panel="side" {% if view_mode == 'table' %}hidden{% endif %}>
     <div class="output-grid" style="--cols: {{ summary.outputs|length }}">
       <article class="output-card patient">
-        <header><svg class="head-icon c-blue" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg><h3>Patient Message</h3></header>
+        <header><svg class="head-icon"><use href="#i-message"></use></svg><h3>Patient Message</h3></header>
         <div class="patient-quote">
           <p>"{{ run.message_text }}"</p>
           <span class="chip">{{ run.get_category_display }}</span>
         </div>
+        {% if run.ehr_summary or run.has_reference %}
+        <div class="side-notes">
+          {% if run.ehr_summary %}
+            <details class="side-note"><summary>Chart summary sent to the models</summary><div class="pre">{{ run.ehr_summary }}</div></details>
+          {% endif %}
+          {% if run.has_reference %}
+            <details class="side-note gt"><summary>Clinician ground truth</summary><div class="pre">{{ run.reference_text }}</div></details>
+          {% endif %}
+        </div>
+        {% endif %}
       </article>
       {% for out in summary.outputs %}
-        <article class="output-card" style="--c: {{ out.color }}">
+        <article class="output-card">
           <header>
-            <span class="badge">{{ out.llm.badge_text|default:"?" }}</span>
-            <h3>{{ out.model_name }}</h3>
-            {% if out.judge.overall %}<span class="score-pill" title="Judge overall score">{{ out.judge.overall|floatformat:"-2" }}/5</span>{% endif %}
+            {% model_mark out %}
+            <div class="output-title"><h3>{{ out.model_name }}</h3><small>{{ out.provider }}</small></div>
+            {% if out.judge.overall %}<span class="score-pill" title="Judge overall score"><svg class="ico"><use href="#i-scale"></use></svg>{{ out.judge.overall|floatformat:"-2" }}/5</span>{% endif %}
           </header>
           <div class="output-body" id="out-{{ out.pk }}">
             {% if out.error %}
-              <div class="output-error"><strong>Request failed</strong><p>{{ out.error }}</p><small>{{ out.openrouter_id }}</small></div>
+              <div class="output-error">
+                <strong>Request failed</strong><p>{{ out.error }}</p><small>{{ out.openrouter_id }}</small>
+                {% if out.looks_temporary %}<p class="retry-hint">This one is usually temporary — press <em>Retry failed</em> above.</p>{% endif %}
+              </div>
             {% else %}
               {% with items=out.text|as_items %}
                 {% if items %}
@@ -179,16 +214,18 @@
                   {{ out.text|linebreaks }}
                 {% endif %}
               {% endwith %}
+              {% if out.truncated %}<p class="cut-off">Cut off at the token limit. Raise <code>LLM_MAX_TOKENS</code> in .env.</p>{% endif %}
             {% endif %}
           </div>
           {% if not out.error %}
           <footer>
-            <span class="muted">
-              {% if run.task == tasks.FOLLOWUP %}{{ out.analysis.question_count }} question{{ out.analysis.question_count|pluralize }}{% else %}{{ out.analysis.word_count }} words{% endif %}
-              {% if out.latency_ms %} · {{ out.latency_ms }} ms{% endif %}
+            <span class="muted out-stats">
+              <span><svg class="ico"><use href="#i-{% if run.task == tasks.FOLLOWUP %}help{% else %}type{% endif %}"></use></svg>{% if run.task == tasks.FOLLOWUP %}{{ out.analysis.question_count }} question{{ out.analysis.question_count|pluralize }}{% else %}{{ out.analysis.word_count }} words{% endif %}</span>
+              {% if out.latency_ms %}<span><svg class="ico"><use href="#i-clock"></use></svg>{{ out.latency_ms }} ms</span>{% endif %}
+              {% if out.attempts > 1 %}<span><svg class="ico"><use href="#i-refresh"></use></svg>{{ out.attempts }} tries</span>{% endif %}
             </span>
             <button type="button" class="copy-btn" data-copy="out-{{ out.pk }}">
-              <svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="1"/><path d="M16 8V4H4v12h4"/></svg>Copy</button>
+              <svg class="ico"><use href="#i-copy"></use></svg>Copy</button>
           </footer>
           {% endif %}
         </article>
@@ -204,7 +241,9 @@
         <tbody>
           {% for out in summary.outputs %}
             <tr>
-              <td class="nowrap"><span class="dot" style="background: {{ out.color }}"></span>{{ out.model_name }}<br><small class="muted">{{ out.openrouter_id }}</small></td>
+              <td class="nowrap">
+                <span class="mark-cell">{% model_mark out size="sm" %}<span>{{ out.model_name }}<br><small class="muted">{{ out.openrouter_id }}</small></span></span>
+              </td>
               <td class="pre output-cell">{% if out.error %}<span class="text-error">{{ out.error }}</span>{% else %}{{ out.text }}{% endif %}</td>
               <td class="details-cell">
                 {% if out.details %}
@@ -222,7 +261,7 @@
 <section class="metrics">
   <header class="metrics-head">
     <div>
-      <h2><svg class="head-icon c-blue" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5"/></svg>Comparison Metrics</h2>
+      <h2><svg class="head-icon"><use href="#i-refresh"></use></svg>Comparison Metrics</h2>
       <p>The headline measures, from the outputs alone. Full detail per model is in <em>Table view</em>.</p>
     </div>
     <div class="metrics-legend">
@@ -233,15 +272,23 @@
   <div class="metrics-grid">
     {% for panel in summary.panels %}
       <div class="card metric {% if panel.placeholder %}metric-off{% endif %}">
-        <h3>{{ panel.label }} {{ panel.arrow }} <span class="info" title="{{ panel.help }}">?</span></h3>
+        <h3>
+          <svg class="ico metric-ico"><use href="#i-{{ panel.icon|default:'chart' }}"></use></svg>
+          <span class="metric-name">{{ panel.label }}</span>
+          <span class="metric-arrow">{{ panel.arrow }}</span>
+          <span class="info" title="{{ panel.help }}">?</span>
+        </h3>
         {% for row in panel.rows %}
           <div class="bar-row {% if row.best %}is-best{% endif %}">
-            <span class="bar-label">{{ row.name }}</span>
-            <span class="bar-track"><span class="bar-fill" style="width: {{ row.pct }}%; background: {{ row.color }}"></span></span>
+            <span class="bar-label">
+              {% if row.mark %}<svg class="ico row-mark" style="--row-ink: {{ row.ink }}"><use href="#i-mark-{{ row.mark }}"></use></svg>{% endif %}
+              <span class="name">{{ row.name }}</span>
+            </span>
+            <span class="bar-track"><span class="bar-fill" style="width: {{ row.pct }}%"></span></span>
             <span class="bar-value">{{ row.value }}</span>
           </div>
         {% endfor %}
-        <p class="hint">{{ panel.help }}</p>
+        <p class="hint metric-help">{{ panel.help }}</p>
       </div>
     {% empty %}
       <div class="card metric"><h3>No metrics</h3><p class="hint">None of the models returned an output.</p></div>

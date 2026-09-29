@@ -4,14 +4,22 @@
 {% block content %}
 <div class="page-head">
   <div>
+    <p class="eyebrow">Data</p>
     <h1>Dataset</h1>
-    <p>{{ total }} patient message{{ total|pluralize }}. Reference outputs power the comparison metrics.</p>
+    <p>Patient messages and the clinician answers the metrics score against.</p>
   </div>
   <div class="actions">
-    <a class="btn-ghost" href="{% url 'dataset:import' %}">Import CSV</a>
-    <a class="btn-ghost" href="{% url 'dataset:export' %}">Export CSV</a>
-    <a class="btn-primary" href="{% url 'dataset:create' %}">+ Add message</a>
+    <a class="btn-ghost" href="{% url 'dataset:import' %}"><svg class="ico"><use href="#i-upload"></use></svg>Import CSV</a>
+    <a class="btn-ghost" href="{% url 'dataset:export' %}"><svg class="ico"><use href="#i-download"></use></svg>Export CSV</a>
+    <a class="btn-primary" href="{% url 'dataset:create' %}"><svg class="ico"><use href="#i-plus"></use></svg>Add message</a>
   </div>
+</div>
+
+<div class="highlights">
+  <div class="highlight"><small><svg class="ico"><use href="#i-message"></use></svg>Messages</small><strong>{{ total }}</strong><span>in the dataset</span></div>
+  <div class="highlight"><small><svg class="ico"><use href="#i-help"></use></svg>Reference questions</small><strong>{{ with_questions }}</strong><span>can score the questions task</span></div>
+  <div class="highlight"><small><svg class="ico"><use href="#i-clipboard"></use></svg>Reference replies</small><strong>{{ with_responses }}</strong><span>can score the response task</span></div>
+  <div class="highlight"><small><svg class="ico"><use href="#i-database"></use></svg>Chart summaries</small><strong>{{ with_ehr }}</strong><span>sent to the models</span></div>
 </div>
 
 <form class="card filters" method="get">
@@ -22,7 +30,7 @@
       <option value="{{ value }}" {% if value == current_category %}selected{% endif %}>{{ label }}</option>
     {% endfor %}
   </select>
-  <button class="btn-ghost" type="submit">Filter</button>
+  <button class="btn-ghost" type="submit"><svg class="ico"><use href="#i-filter"></use></svg>Filter</button>
   {% if q or current_category %}<a class="small-link" href="{% url 'dataset:list' %}">Clear</a>{% endif %}
 </form>
 
@@ -36,12 +44,12 @@
         <tr>
           <td class="msg-cell">"{{ m.text|truncatechars:110 }}"</td>
           <td><span class="chip">{{ m.get_category_display }}</span></td>
-          <td>{% if m.reference_followup %}<span class="yes">Yes</span>{% else %}<span class="no">No</span>{% endif %}</td>
-          <td>{% if m.reference_response %}<span class="yes">Yes</span>{% else %}<span class="no">No</span>{% endif %}</td>
-          <td>{% if m.is_featured %}<span class="yes">Yes</span>{% else %}<span class="no">No</span>{% endif %}</td>
+          <td>{% if m.reference_followup %}<svg class="ico tick" title="Has reference questions"><use href="#i-check"></use></svg>{% else %}<span class="no">—</span>{% endif %}</td>
+          <td>{% if m.reference_response %}<svg class="ico tick" title="Has a reference reply"><use href="#i-check"></use></svg>{% else %}<span class="no">—</span>{% endif %}</td>
+          <td>{% if m.is_featured %}<svg class="ico tick"><use href="#i-check"></use></svg>{% else %}<span class="no">—</span>{% endif %}</td>
           <td class="row-actions">
-            <a href="{% url 'dataset:edit' m.pk %}">Edit</a>
-            <a class="danger" href="{% url 'dataset:delete' m.pk %}">Delete</a>
+            <a class="icon-link" href="{% url 'dataset:edit' m.pk %}" title="Edit"><svg class="ico"><use href="#i-pencil"></use></svg>Edit</a>
+            <a class="icon-link danger" href="{% url 'dataset:delete' m.pk %}" title="Delete"><svg class="ico"><use href="#i-trash"></use></svg>Delete</a>
           </td>
         </tr>
       {% empty %}

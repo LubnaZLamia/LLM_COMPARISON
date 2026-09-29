@@ -25,6 +25,55 @@
     if (e.target.name === "task") syncSelected("task", ".task-option");
   });
 
+  // --- Filter the example messages, and flag ones without ground truth --------
+  const search = document.getElementById("example-search");
+  const gtOnly = document.getElementById("gt-only");
+  const exampleList = document.getElementById("example-list");
+  if (exampleList) {
+    const options = Array.from(exampleList.querySelectorAll(".option"));
+    const count = document.getElementById("search-count");
+    const currentTask = () => document.querySelector('input[name="task"]:checked')?.value || "followup";
+    const hasGroundTruth = (o) =>
+      (currentTask() === "followup" ? o.dataset.gtFollowup : o.dataset.gtResponse) === "1";
+
+    const apply = () => {
+      const q = (search?.value || "").trim().toLowerCase();
+      const onlyGt = !!gtOnly?.checked;
+      let shown = 0;
+      options.forEach((o) => {
+        const gt = hasGroundTruth(o);
+        o.classList.toggle("no-gt", !gt);           // dimmed + "no ground truth" note
+        const hit = (!q || (o.dataset.search || "").includes(q)) && (!onlyGt || gt);
+        o.hidden = !hit;
+        if (hit) shown++;
+      });
+      if (count) {
+        count.textContent = q || onlyGt ? `${shown} of ${options.length} messages` : "";
+      }
+    };
+
+    search?.addEventListener("input", apply);
+    gtOnly?.addEventListener("change", apply);
+    // Re-flag when the task changes: ground truth differs per task.
+    document.querySelectorAll('input[name="task"]').forEach((r) => r.addEventListener("change", apply));
+    apply();
+  }
+
+  // --- Rating form: show how many scores are still missing -------------------
+  const progress = document.getElementById("rate-progress");
+  if (progress) {
+    const total = Number(progress.dataset.total || 0);
+    const update = () => {
+      const done = document.querySelectorAll('.scale input:checked').length;
+      progress.textContent = done === total
+        ? `All ${total} scores given — ready to save`
+        : `${done} of ${total} scores given`;
+      progress.classList.toggle("complete", done === total);
+    };
+    document.getElementById("rate-form")?.addEventListener("change", update);
+    update();
+  }
+
   // --- Loading overlay on submit ------------------------------------------
   if (form) {
     form.addEventListener("submit", () => {

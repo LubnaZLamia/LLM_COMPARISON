@@ -13,6 +13,12 @@ General response
     elements         emergency guidance / points to care team / empathetic language
     topics           which clinical areas the reply addresses
 
+When the dataset message carries clinician ground truth, two more values are added:
+
+    gt_matched / gt_total  follow-up: how many of the clinician's questions the model asked
+    gt_score               share of the ground truth the model captured (0-1)
+    gt_missed              what it missed
+
 All checks are heuristic (word overlap and keyword lists). They are a quick, free,
 transparent signal; use the optional judge model for a qualitative score.
 """
@@ -20,8 +26,11 @@ from __future__ import annotations
 
 import re
 
+from django.conf import settings
+
 from apps.comparisons.models import Task
 
+from . import metrics
 from .metrics import content_tokens
 
 # ---------------------------------------------------------------------------
@@ -102,6 +111,55 @@ def grade_level(text: str) -> float | None:
 # Per-task analysis
 # ---------------------------------------------------------------------------
 
+def asks_about(gold_tokens: set[str], asked: list[set[str]]) -> bool:
+    """True when one of the model's questions covers this clinician question.
+
+    Recall-based on purpose: a model that asks "Any nausea or vomiting?" covers two
+    of the clinician's separate questions, and should get credit for both.
+    The bar is GT_MATCH_RECALL (default 0.5) of the clinician question's meaningful words.
+    """
+    if not gold_tokens:
+        return False
+    best = max((len(gold_tokens & q) / len(gold_tokens) for q in asked), default=0.0)
+    return best >= settings.GT_MATCH_RECALL
+
+
+def match_reference_questions(output: str, reference_questions: list[str]) -> tuple[list[str], list[str]]:
+    """Split the clinician's questions into (asked by the model, missed)."""
+    asked = [content_tokens(q) for q in extract_questions(output)] or [content_tokens(output)]
+    matched, missed = [], []
+    for gold in reference_questions:
+        (matched if asks_about(content_tokens(gold), asked) else missed).append(gold)
+    return matched, missed
+
+
+def ground_truth_for_questions(output: str, reference: str) -> dict:
+    gold = [q.strip() for q in reference.splitlines() if q.strip()]
+    if not gold:
+        return {}
+    matched, missed = match_reference_questions(output, gold)
+    return {
+        "gt_matched": len(matched),
+        "gt_total": len(gold),
+        "gt_score": round(len(matched) / len(gold), 2),
+        "gt_missed": missed,
+    }
+
+
+def ground_truth_for_response(output: str, reference: str) -> dict:
+    """How much of the clinician's reply the model's reply covers."""
+    scored = metrics.score(output, reference)
+    if not scored:
+        return {}
+    covered = len(metrics.split_units(reference)) - len(scored.missed_points)
+    return {
+        "gt_matched": covered,
+        "gt_total": len(metrics.split_units(reference)),
+        "gt_score": scored.reference_coverage,
+        "gt_missed": scored.missed_points,
+    }
+
+
 def analyze_followups(outputs: dict[int, str]) -> dict[int, dict]:
     """`outputs` maps an output id to its text. Returns analysis per id."""
     questions = {k: extract_questions(v) for k, v in outputs.items()}
@@ -142,7 +200,14 @@ def analyze_responses(outputs: dict[int, str]) -> dict[int, dict]:
     return results
 
 
-def analyze(task: str, outputs: dict[int, str]) -> dict[int, dict]:
+def analyze(task: str, outputs: dict[int, str], reference: str = "") -> dict[int, dict]:
+    """Analyse every output. `reference` is the clinician ground truth, when the dataset has one."""
     if not outputs:
         return {}
-    return analyze_followups(outputs) if task == Task.FOLLOWUP else analyze_responses(outputs)
+    is_followup = task == Task.FOLLOWUP
+    results = analyze_followups(outputs) if is_followup else analyze_responses(outputs)
+    if reference.strip():
+        ground_truth = ground_truth_for_questions if is_followup else ground_truth_for_response
+        for key, text in outputs.items():
+            results[key].update(ground_truth(text, reference))
+    return results

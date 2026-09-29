@@ -26,6 +26,13 @@ class PatientMessage(models.Model):
         blank=True,
         help_text="Reference reply to the patient. Used to score the 'General Response' task.",
     )
+    ehr_summary = models.TextField(
+        blank=True,
+        help_text="Chart context (demographics, problem list, diagnoses, medications) sent to the models with the message.",
+    )
+    source = models.CharField(
+        max_length=60, blank=True, help_text="Where this message came from, e.g. the dataset file name.",
+    )
     notes = models.TextField(blank=True, help_text="Internal notes (source, reviewer, etc.).")
     is_featured = models.BooleanField(
         default=True, help_text="Show this message in the example list on the Compare page."
@@ -47,3 +54,11 @@ class PatientMessage(models.Model):
     @property
     def has_references(self) -> bool:
         return bool(self.reference_followup.strip() or self.reference_response.strip())
+
+    def has_reference_for(self, task: str) -> bool:
+        return bool(self.reference_for(task).strip())
+
+    @property
+    def reference_questions(self) -> list[str]:
+        """The clinician's follow-up questions, one per line."""
+        return [q.strip() for q in self.reference_followup.splitlines() if q.strip()]

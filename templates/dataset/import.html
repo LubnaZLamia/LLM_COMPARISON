@@ -3,6 +3,7 @@
 <div class="page-head">
   <div>
     <a class="small-link" href="{% url 'dataset:list' %}">← Back to dataset</a>
+    <p class="eyebrow">Dataset</p>
     <h1>Import CSV</h1>
   </div>
 </div>
@@ -10,12 +11,13 @@
   {% csrf_token %}
   <p>Upload a UTF-8 CSV with a header row. Columns:</p>
   <p>{% for f in fields %}<code>{{ f }}</code>{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+  <p class="hint">For the two research datasets use the command line instead: <code>python manage.py import_datasets --questions data/questions.csv --responses data/responses.csv</code> (it also reads .parquet if pandas and pyarrow are installed).</p>
   <p class="hint">Only <code>text</code> is required. <code>category</code> can be a value like <code>medication</code> or a label like <code>Test / Results</code>. Put each reference follow-up question on its own line inside the quoted cell. Tip: export the current dataset to get a template.</p>
   <label class="field"><span>CSV file</span>{{ form.file }}</label>
   {% for e in form.file.errors %}<small class="text-error">{{ e }}</small>{% endfor %}
-  <div class="actions">
+  <div class="form-actions">
     <a class="btn-ghost" href="{% url 'dataset:list' %}">Cancel</a>
-    <button class="btn-primary" type="submit">Import</button>
+    <button class="btn-primary" type="submit"><svg class="ico"><use href="#i-upload"></use></svg>Import file</button>
   </div>
 </form>
 {% endblock %}

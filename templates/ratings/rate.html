@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load outputs rating_extras %}
+{% block title %}Rate run #{{ run.pk }} · LLM Health Assistant{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <a class="small-link" href="{% url 'ratings:list' %}">← All runs</a>
+    <p class="eyebrow">Step 3 of 4</p>
+    <h1>Score each output</h1>
+    <p>Run #{{ run.pk }} · {{ run.get_task_display }} · rating as <strong>{{ rater }}</strong></p>
+  </div>
+  <div class="actions">
+    <span class="blind-badge">
+      <svg class="ico"><use href="#i-eye-off"></use></svg>
+      Model names hidden until you save
+    </span>
+  </div>
+</div>
+
+<section class="card rate-message">
+  <h2><svg class="ico"><use href="#i-message"></use></svg>The patient wrote</h2>
+  <div class="patient-quote">"{{ run.message_text }}"</div>
+  {% if run.ehr_summary or run.has_reference %}
+    <div class="side-notes side-notes-inline">
+      {% if run.ehr_summary %}
+        <details class="side-note"><summary>Chart summary the models were given</summary><div class="pre">{{ run.ehr_summary }}</div></details>
+      {% endif %}
+      {% if run.has_reference %}
+        <details class="side-note gt"><summary>What the clinician actually wrote (optional — may bias you)</summary><div class="pre">{{ run.reference_text }}</div></details>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+
+{% if already_rated %}
+  <div class="flash">You rated this run before. Your scores are filled in below — saving updates them.</div>
+{% endif %}
+
+<div class="scale-key">
+  <svg class="ico"><use href="#i-info"></use></svg><strong>How to score:</strong>
+  <span><b>1</b> very poor</span><span><b>2</b> poor</span><span><b>3</b> acceptable</span>
+  <span><b>4</b> good</span><span><b>5</b> excellent</span>
+  <span class="muted">All six dimensions on every card are required. Hover a “?” for what it means.</span>
+</div>
+
+<form method="post" class="rate-form" id="rate-form">
+  {% csrf_token %}
+  <div class="rate-grid">
+    {% for card in cards %}
+      <article class="card rate-card">
+        <header class="rate-card-head">
+          <h3><span class="badge badge-blind">{{ card.label|slice:"-1:" }}</span>{{ card.label }}
+            <span class="hint blind-note"><svg class="ico"><use href="#i-eye-off"></use></svg>name hidden</span></h3>
+          {% with items=card.output.text|as_items %}
+            <div class="rate-output">
+              {% if items %}<ol>{% for it in items %}<li>{{ it }}</li>{% endfor %}</ol>
+              {% else %}{{ card.output.text|linebreaks }}{% endif %}
+            </div>
+          {% endwith %}
+        </header>
+
+        {% for field in card.form %}
+          {% if field.name == "comment" %}
+            <label class="field comment-field"><span>Comment (optional)</span>{{ field }}</label>
+          {% else %}
+            <fieldset class="dim {% if field.errors %}dim-error{% endif %}">
+              <legend>
+                <svg class="ico dim-ico"><use href="#i-{{ field.name|dim_icon }}"></use></svg>
+                {{ field.label }} <span class="info" title="{{ field.help_text }}">?</span>
+              </legend>
+              <p class="dim-help">{{ field.help_text }}</p>
+              <div class="scale">
+                {% for radio in field %}
+                  <label class="scale-option" title="{{ radio.choice_label }}">
+                    {{ radio.tag }}<span>{{ radio.choice_label|slice:":1" }}</span>
+                  </label>
+                {% endfor %}
+              </div>
+            </fieldset>
+          {% endif %}
+        {% endfor %}
+      </article>
+    {% endfor %}
+  </div>
+
+  <div class="rate-actions">
+    <span class="progress-note" id="rate-progress" data-total="{{ total_scores }}">
+      0 of {{ total_scores }} scores given
+    </span>
+    <button class="btn-primary" type="submit"><svg class="ico"><use href="#i-eye-off"></use></svg>Save and reveal model names</button>
+  </div>
+</form>
+{% endblock %}

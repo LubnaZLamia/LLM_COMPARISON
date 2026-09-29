@@ -11,7 +11,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 from .forms import CSVImportForm, PatientMessageForm
 from .models import Category, PatientMessage
 
-CSV_FIELDS = ["text", "category", "reference_followup", "reference_response", "notes"]
+CSV_FIELDS = ["text", "category", "ehr_summary", "reference_followup", "reference_response", "notes"]
 
 
 class MessageListView(ListView):
@@ -32,11 +32,15 @@ class MessageListView(ListView):
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        all_messages = PatientMessage.objects.all()
         ctx.update(
             categories=Category.choices,
             q=self.request.GET.get("q", ""),
             current_category=self.request.GET.get("category", ""),
-            total=PatientMessage.objects.count(),
+            total=all_messages.count(),
+            with_questions=all_messages.exclude(reference_followup="").count(),
+            with_responses=all_messages.exclude(reference_response="").count(),
+            with_ehr=all_messages.exclude(ehr_summary="").count(),
         )
         return ctx
 
@@ -101,6 +105,7 @@ def import_csv(request):
             PatientMessage.objects.create(
                 text=text,
                 category=cat,
+                ehr_summary=row.get("ehr_summary", "") or "",
                 reference_followup=row.get("reference_followup", "") or "",
                 reference_response=row.get("reference_response", "") or "",
                 notes=row.get("notes", "") or "",

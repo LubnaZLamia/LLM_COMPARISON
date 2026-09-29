@@ -53,9 +53,9 @@ def mock_scores(task: str, index: int) -> dict:
             "rationale": "Mock judge score (mock mode is on)."}
 
 
-def score_output(model_id: str, task: str, message: str, output: str) -> dict:
+def score_output(model_id: str, task: str, message: str, output: str, ehr: str = "") -> dict:
     try:
-        system, user = build_judge_prompts(task, message, output)
+        system, user = build_judge_prompts(task, message, output, ehr)
         result = chat(model_id, system, user, temperature=0)
         return parse_scores(result.text, task)
     except (OpenRouterError, ValueError, json.JSONDecodeError) as exc:

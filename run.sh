@@ -9,6 +9,7 @@ $PY scripts/setup_env.py
 $PY manage.py migrate --noinput -v 0
 $PY manage.py seed_dataset
 $PY manage.py seed_models --repair
+[ -f data/questions.csv ] && $PY manage.py import_datasets --questions data/questions.csv --responses data/responses.csv
 $PY manage.py ensure_admin
 echo "App running at http://127.0.0.1:8000 (Ctrl+C to stop)"
 $PY manage.py runserver 127.0.0.1:8000

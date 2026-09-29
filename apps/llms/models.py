@@ -1,5 +1,69 @@
 from django.db import models
 
+# Each provider gets one of these abstract shapes as its mark (see
+# templates/partials/icons.html). They are plain geometry on purpose: they make a
+# model recognisable at a glance without reproducing anyone's logo.
+MARKS = ("hex", "trio", "rings", "diamond", "chevron", "spark")
+PROVIDER_MARKS = {
+    "openai": "rings",
+    "anthropic": "chevron",
+    "google": "diamond",
+    "meta": "hex",
+    "mistral": "trio",
+    "deepseek": "spark",
+    "x-ai": "spark",
+    "xai": "spark",
+    "qwen": "hex",
+    "alibaba": "hex",
+    "cohere": "rings",
+    "microsoft": "diamond",
+    "amazon": "trio",
+    "nvidia": "chevron",
+}
+FALLBACK_COLOR = "#64748b"
+
+
+def mark_for(provider: str, fallback: str = "") -> str:
+    """Shape id for a provider. Known names are fixed; anything else is hashed
+    into the same small set, so a new provider still gets a stable mark."""
+    key = (provider or fallback or "").strip().lower()
+    if key in PROVIDER_MARKS:
+        return PROVIDER_MARKS[key]
+    if not key:
+        return "spark"
+    return MARKS[sum(map(ord, key)) % len(MARKS)]
+
+
+def _rgb(color: str) -> tuple[int, int, int]:
+    raw = (color or "").lstrip("#")
+    if len(raw) == 3:
+        raw = "".join(c * 2 for c in raw)
+    try:
+        return int(raw[0:2], 16), int(raw[2:4], 16), int(raw[4:6], 16)
+    except (ValueError, IndexError):
+        return _rgb(FALLBACK_COLOR)
+
+
+def tint_of(color: str, alpha: float = 0.12) -> str:
+    """Very light wash of the model's colour, for the badge background."""
+    r, g, b = _rgb(color)
+    return f"rgba({r},{g},{b},{alpha})"
+
+
+def line_of(color: str) -> str:
+    """A hairline of the same colour for the badge's inner border."""
+    return tint_of(color, 0.3)
+
+
+def ink_of(color: str) -> str:
+    """The same colour darkened until it reads on that pale wash."""
+    r, g, b = _rgb(color)
+    lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+    if lum > 0.42:
+        f = 0.42 / lum
+        r, g, b = int(r * f), int(g * f), int(b * f)
+    return f"#{r:02x}{g:02x}{b:02x}"
+
 
 class LLMModel(models.Model):
     """A model that can be selected on the Compare page.
@@ -33,3 +97,20 @@ class LLMModel(models.Model):
     @property
     def badge_text(self) -> str:
         return self.badge or "".join(w[0] for w in self.display_name.split()[:2]).upper()
+
+    # --- identity mark (shape + two shades of this model's colour) ---
+    @property
+    def mark(self) -> str:
+        return mark_for(self.provider, self.display_name)
+
+    @property
+    def tint(self) -> str:
+        return tint_of(self.color)
+
+    @property
+    def line(self) -> str:
+        return line_of(self.color)
+
+    @property
+    def ink(self) -> str:
+        return ink_of(self.color)

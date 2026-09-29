@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "apps.dataset",
     "apps.llms",
     "apps.comparisons",
+    "apps.ratings",
 ]
 
 MIDDLEWARE = [
@@ -91,13 +92,18 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 OPENROUTER_TIMEOUT = int(os.getenv("OPENROUTER_TIMEOUT", "90"))
 LLM_TEMPERATURE = float(os.getenv("LLM_TEMPERATURE", "0.2"))
-LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "600"))
+# 600 was too low: models that "think" before answering (Gemini, reasoning models)
+# spend part of the budget internally and get cut off mid-sentence.
+LLM_MAX_TOKENS = int(os.getenv("LLM_MAX_TOKENS", "1500"))
+# Temporary failures (HTTP 429 "provider busy", 5xx, timeouts, empty replies) are retried.
+OPENROUTER_MAX_ATTEMPTS = int(os.getenv("OPENROUTER_MAX_ATTEMPTS", "3"))
+OPENROUTER_RETRY_BACKOFF = float(os.getenv("OPENROUTER_RETRY_BACKOFF", "1.0"))
 # OpenRouter id of the model that scores outputs when "Score with judge model" is ticked.
 # Leave blank to use the model marked "is judge" in admin.
 JUDGE_MODEL = os.getenv("JUDGE_MODEL", "").strip()
-# Reference-based metrics (coverage / missing info vs. a clinician reference).
-# Off for now: the app compares models on their outputs alone.
-SHOW_REFERENCE_METRICS = env_bool("SHOW_REFERENCE_METRICS", False)
+# Ground-truth matching: how much of a clinician question's wording must appear
+# in a model question before it counts as asked (0-1). Lower = more generous.
+GT_MATCH_RECALL = float(os.getenv("GT_MATCH_RECALL", "0.5"))
 # When true, no API calls are made; each model returns a canned answer.
 # Handy for working on the UI without spending credits.
 LLM_MOCK_MODE = env_bool("LLM_MOCK_MODE", False)

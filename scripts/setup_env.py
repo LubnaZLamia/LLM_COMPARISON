@@ -54,6 +54,21 @@ def main():
             set_value(lines, "LLM_MOCK_MODE", "true")
             print(" No key entered: starting in mock mode. Run again or edit .env to add one.\n")
 
+    # Settings added after the first release, or values that turned out too low.
+    # (600 output tokens cut off models that think before answering.)
+    try:
+        tokens = int(get(lines, "LLM_MAX_TOKENS") or 0)
+    except ValueError:
+        tokens = 0
+    if tokens < 1200:
+        set_value(lines, "LLM_MAX_TOKENS", "1500")
+        print(" Raised LLM_MAX_TOKENS to 1500 so long answers aren't cut off.")
+
+    for key, default in (("OPENROUTER_MAX_ATTEMPTS", "3"), ("OPENROUTER_RETRY_BACKOFF", "1.0"),
+                         ("JUDGE_MODEL", ""), ("GT_MATCH_RECALL", "0.5")):
+        if get(lines, key) is None:
+            set_value(lines, key, default)
+
     ENV.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

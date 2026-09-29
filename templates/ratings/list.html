@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Rate · LLM Health Assistant{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Human evaluation</p>
+    <h1>Clinician Rating</h1>
+    <p>Score model outputs blind, so the scores follow the writing and not the brand name.</p>
+  </div>
+  <div class="actions">
+    {% if total_ratings %}<a class="btn-ghost" href="{% url 'ratings:download' %}"><svg class="ico"><use href="#i-download"></use></svg>Download ratings CSV</a>{% endif %}
+  </div>
+</div>
+
+<ol class="how-steps">
+  <li><span class="step-dot"><svg class="ico"><use href="#i-user-check"></use></svg></span><div><strong>Add your name</strong><small>Saved with each rating. Not a login.</small></div></li>
+  <li><span class="step-dot"><svg class="ico"><use href="#i-list"></use></svg></span><div><strong>Pick a run</strong><small>Any comparison you have already generated.</small></div></li>
+  <li><span class="step-dot"><svg class="ico"><use href="#i-star"></use></svg></span><div><strong>Score each output 1–5</strong><small>Shown as Model A, B, C — names hidden.</small></div></li>
+  <li><span class="step-dot"><svg class="ico"><use href="#i-check"></use></svg></span><div><strong>Save</strong><small>Model names are revealed with your scores.</small></div></li>
+</ol>
+
+<form method="post" class="card rater-bar" id="rater">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+  <label class="field">
+    <span>Step 1 — Your name or initials</span>
+    {{ form.rater }}
+  </label>
+  <button class="btn-primary" type="submit"><svg class="ico"><use href="#i-check"></use></svg>{% if rater %}Change name{% else %}Continue{% endif %}</button>
+  {% if rater %}
+    <p class="rater-now">Rating as <strong>{{ rater }}</strong> · {{ total_ratings }} rating{{ total_ratings|pluralize }} from {{ raters }} rater{{ raters|pluralize }} so far</p>
+  {% else %}
+    <p class="rater-now">Enter a name to start. Everything you score is stored under it.</p>
+  {% endif %}
+</form>
+
+<div class="card table-card">
+  <table class="data-table">
+    <thead>
+      <tr><th>Run</th><th>Task</th><th>Patient message</th><th>Outputs</th><th>Ratings so far</th><th>Step 2</th></tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+        <tr>
+          <td class="nowrap">#{{ run.pk }}<br><small class="muted"><svg class="ico"><use href="#i-clock"></use></svg>{{ run.created_at|date:"j M, H:i" }}</small></td>
+          <td class="nowrap"><span class="mark-cell"><svg class="ico row-ico"><use href="#i-{% if run.task == 'followup' %}help{% else %}message{% endif %}"></use></svg>{% if run.task == 'followup' %}Questions{% else %}Response{% endif %}</span></td>
+          <td class="msg-cell">"{{ run.message_text|truncatechars:110 }}"</td>
+          <td class="nowrap"><span class="mark-cell"><svg class="ico row-ico"><use href="#i-cpu"></use></svg>{{ run.answered }} model{{ run.answered|pluralize }}</span></td>
+          <td>
+            {% if run.mine %}<span class="chip chip-gt"><svg class="ico"><use href="#i-check"></use></svg>Rated by you</span>{% endif %}
+            {% if run.rater_count %}<span class="chip">{{ run.rater_count }} rater{{ run.rater_count|pluralize }}</span>{% endif %}
+            {% if not run.mine and not run.rater_count %}<span class="muted">Not rated yet</span>{% endif %}
+          </td>
+          <td class="row-actions">
+            {% if run.answered %}
+              <a class="btn-ghost btn-small" href="{% url 'ratings:rate' run.pk %}"><svg class="ico"><use href="#i-{% if run.mine %}pencil{% else %}star{% endif %}"></use></svg>{% if run.mine %}Edit my rating{% else %}Rate this run{% endif %}</a>
+            {% else %}<span class="muted">no outputs to rate</span>{% endif %}
+            <a class="small-link" href="{% url 'comparisons:run' run.pk %}">View run</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="6" class="empty">
+          No comparison runs yet. Generate one on the <a href="{% url 'comparisons:compare' %}">Compare</a> page, then come back here to rate it.
+        </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

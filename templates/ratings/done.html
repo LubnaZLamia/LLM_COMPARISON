@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load marks %}
+{% block title %}Ratings saved · LLM Health Assistant{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Step 4 of 4</p>
+    <h1>Ratings saved</h1>
+    <p>Run #{{ run.pk }} · {{ run.get_task_display }} · rated by <strong>{{ rater }}</strong></p>
+  </div>
+  <div class="actions">
+    <a class="btn-ghost" href="{% url 'comparisons:run' run.pk %}"><svg class="ico"><use href="#i-chart"></use></svg>See the run</a>
+    <a class="btn-ghost" href="{% url 'ratings:download' %}"><svg class="ico"><use href="#i-download"></use></svg>Download CSV</a>
+    <a class="btn-primary" href="{% url 'ratings:list' %}"><svg class="ico"><use href="#i-star"></use></svg>Rate another</a>
+  </div>
+</div>
+
+<section class="card">
+  <h2><svg class="ico"><use href="#i-eye-off"></use></svg>Which model was which</h2>
+  <div class="table-wrap">
+    <table class="data-table reveal-table">
+      <thead>
+        <tr><th>Shown as</th><th>Actually</th>{% for label, help in dimension_labels %}<th title="{{ help }}">{{ label }}</th>{% endfor %}<th>Overall</th></tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td class="nowrap"><span class="chip">{{ row.rating.blind_label }}</span></td>
+            <td class="nowrap"><span class="mark-cell">{% model_mark row.output size="sm" %}{{ row.output.model_name }}</span></td>
+            {% for score in row.scores %}<td>{{ score|default_if_none:"–" }}</td>{% endfor %}
+            <td><span class="score-tag">{{ row.rating.overall }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% if summary.models %}
+<section class="card">
+  <h2><svg class="ico"><use href="#i-users"></use></svg>All raters on this run</h2>
+  <p class="hint">{{ summary.rating_count }} rating{{ summary.rating_count|pluralize }} from {{ summary.rater_count }} rater{{ summary.rater_count|pluralize }}.</p>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th>Model</th><th>Raters</th>{% for label in summary.dimension_labels %}<th>{{ label }}</th>{% endfor %}<th>Overall</th></tr>
+      </thead>
+      <tbody>
+        {% for m in summary.models %}
+          <tr>
+            <td class="nowrap"><span class="mark-cell">{% model_mark m.output size="sm" %}{{ m.name }}</span></td>
+            <td>{{ m.raters }}</td>
+            {% for value in m.dimensions %}<td>{{ value }}</td>{% endfor %}
+            <td><span class="score-tag">{{ m.overall }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

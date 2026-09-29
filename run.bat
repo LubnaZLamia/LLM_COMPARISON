@@ -33,6 +33,7 @@ echo Installing / checking packages...
 "%VPY%" manage.py migrate --noinput -v 0 || goto :error
 "%VPY%" manage.py seed_dataset || goto :error
 "%VPY%" manage.py seed_models --repair || goto :error
+if exist "data\questions.csv" "%VPY%" manage.py import_datasets --questions data\questions.csv --responses data\responses.csv || goto :error
 "%VPY%" manage.py ensure_admin || goto :error
 
 echo.
