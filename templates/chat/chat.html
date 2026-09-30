@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load static marks %}
+{% block title %}{% if conversation %}{{ conversation.title }} · {% endif %}Chat · LLM Health Assistant{% endblock %}
+
+{% block content %}
+<div class="chat-shell">
+  <aside class="chat-side card" aria-label="Conversations">
+    <a class="btn-primary chat-new" href="{% url 'chat:new' %}"><svg class="ico"><use href="#i-plus"></use></svg>New chat</a>
+    <p class="chat-side-label">Recent chats</p>
+    <nav class="chat-list" id="chat-list">
+      {% for c in conversations %}
+        <a href="{% url 'chat:conversation' c.pk %}" class="{% if conversation and c.pk == conversation.pk %}active{% endif %}">
+          <span class="chat-list-title">{{ c.title|default:"Untitled chat" }}</span>
+          <small>{{ c.updated_at|date:"j M, H:i" }}</small>
+        </a>
+      {% empty %}
+        <p class="chat-list-empty" id="chat-list-empty">No chats yet.</p>
+      {% endfor %}
+    </nav>
+  </aside>
+
+  <section class="chat-main card">
+    <header class="chat-head">
+      <div class="model-picker" id="model-picker">
+        {% if llms %}
+          <button type="button" class="model-picker-btn" id="model-picker-btn" aria-haspopup="listbox" aria-expanded="false">
+            <span id="model-picker-mark">{% model_mark current_llm %}</span>
+            <span class="model-picker-text"><strong id="model-picker-name">{{ current_llm.display_name }}</strong><small id="model-picker-provider">{{ current_llm.provider }}</small></span>
+            <svg class="ico chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <ul class="model-menu" id="model-menu" role="listbox" aria-label="Model" hidden>
+            {% for m in llms %}
+              <li role="option" tabindex="-1" data-id="{{ m.pk }}" data-name="{{ m.display_name }}" data-provider="{{ m.provider }}"
+                  aria-selected="{% if m.pk == current_llm.pk %}true{% else %}false{% endif %}">
+                {% model_mark m %}
+                <span><strong>{{ m.display_name }}</strong><small>{{ m.provider }} · {{ m.openrouter_id }}</small></span>
+                <svg class="ico tick"><use href="#i-check"></use></svg>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <span class="text-error">No active models. Add one in <a href="/admin/llms/llmmodel/">admin</a>.</span>
+        {% endif %}
+      </div>
+      {% if conversation %}
+        <div class="chat-head-actions">
+          <a class="btn-ghost btn-small" href="{% url 'chat:export' conversation.pk %}" title="Download this chat as JSON"><svg class="ico"><use href="#i-download"></use></svg><span>Export</span></a>
+          <form method="post" action="{% url 'chat:delete' conversation.pk %}" onsubmit="return confirm('Delete this chat?');">
+            {% csrf_token %}
+            <button class="btn-ghost btn-small" type="submit" title="Delete this chat"><svg class="ico"><use href="#i-trash"></use></svg><span>Delete</span></button>
+          </form>
+        </div>
+      {% endif %}
+    </header>
+
+    <div class="chat-scroll" id="chat-scroll">
+      <div class="chat-welcome" id="chat-welcome"{% if history %} hidden{% endif %}>
+        <svg class="head-icon"><use href="#i-heart-pulse"></use></svg>
+        <h1>How can I help today?</h1>
+        <p>You are the patient. Ask about a symptom, a medication or a test result. The assistant remembers what you said earlier in this chat.</p>
+        <div class="chat-suggest">
+          <button type="button" data-suggest="I've been feeling dizzy since I started my new blood pressure pill. Should I stop taking it?">Dizzy on a new blood pressure pill</button>
+          <button type="button" data-suggest="My blood sugar was 250 this morning. Is that bad?">Blood sugar of 250 this morning</button>
+          <button type="button" data-suggest="I've had a cough for two weeks and it's not getting better.">A cough that won't go away</button>
+        </div>
+      </div>
+
+      <div class="chat-thread" id="chat-thread">
+        {% for m in history %}
+          {% if m.is_user %}
+            <div class="msg msg-user"><div class="bubble md">{{ m.content }}</div></div>
+          {% else %}
+            <div class="msg msg-bot{% if m.error %} has-error{% endif %}" data-id="{{ m.pk }}">
+              {% model_mark m %}
+              <div class="msg-body">
+                <div class="msg-meta"><strong>{{ m.model_name }}</strong>{% if m.latency_ms %} · {{ m.latency_s|floatformat:1 }} s{% endif %}{% if m.completion_tokens %} · {{ m.completion_tokens }} tokens{% endif %}{% if m.truncated %} · <span class="text-warn">cut off by token limit</span>{% endif %}{% if m.stopped %} · stopped{% endif %}</div>
+                {% if m.content %}<div class="md">{{ m.content }}</div>{% elif not m.error %}<p class="muted">Still writing, or the reply was lost. Refresh in a moment.</p>{% endif %}
+                {% if m.error %}<div class="msg-error"><svg class="ico"><use href="#i-alert"></use></svg><span>{{ m.error }}</span></div>{% endif %}
+                <div class="msg-actions">
+                  {% if m.content %}<button type="button" class="msg-btn" data-action="copy"><svg class="ico"><use href="#i-copy"></use></svg>Copy</button>{% endif %}
+                  {% if m.pk == last_reply_id %}<button type="button" class="msg-btn" data-action="regenerate"><svg class="ico"><use href="#i-refresh"></use></svg>{% if m.error %}Try again{% else %}Regenerate{% endif %}</button>{% endif %}
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+        {% if awaiting_reply %}
+          <div class="msg msg-bot has-error" data-orphan>
+            <div class="msg-body">
+              <div class="msg-error"><svg class="ico"><use href="#i-alert"></use></svg><span>No reply was saved for this message.</span></div>
+              <div class="msg-actions"><button type="button" class="msg-btn" data-action="regenerate"><svg class="ico"><use href="#i-refresh"></use></svg>Get a reply</button></div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <form class="chat-composer" id="chat-form" autocomplete="off"
+          data-send-url="{% url 'chat:send' %}"
+          data-regenerate-url="{% if conversation %}{% url 'chat:regenerate' conversation.pk %}{% endif %}"
+          data-regenerate-template="{% url 'chat:regenerate' 0 %}">
+      {% csrf_token %}
+      <input type="hidden" name="conversation" id="chat-conversation" value="{{ conversation.pk|default:'' }}">
+      <input type="hidden" name="model" id="chat-model" value="{{ current_llm.pk|default:'' }}">
+      <div class="composer-box">
+        <textarea name="message" id="chat-input" rows="1" maxlength="{{ max_chars }}" placeholder="Message the assistant…" aria-label="Your message"{% if not llms %} disabled{% endif %}></textarea>
+        <button type="submit" class="btn-primary composer-send" id="chat-send" title="Send (Enter)"{% if not llms %} disabled{% endif %}>
+          <svg class="ico" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg><span>Send</span>
+        </button>
+        <button type="button" class="btn-ghost composer-stop" id="chat-stop" title="Stop the reply" hidden>
+          <svg class="ico" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg><span>Stop</span>
+        </button>
+      </div>
+      <p class="composer-note">Enter to send · Shift+Enter for a new line · Research tool, not medical advice. In an emergency, call 911.</p>
+    </form>
+    <noscript><p class="text-error composer-note">The chat needs JavaScript turned on.</p></noscript>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/chat.js' %}"></script>{% endblock %}

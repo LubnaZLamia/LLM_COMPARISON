@@ -25,6 +25,7 @@ After that, double-clicking `run.bat` starts the app straight away. Close the wi
 |---|---|
 | `/` | **Compare**: pick a message, a task and models, then generate |
 | `/runs/<id>/` | **Results**: highlight tiles, side-by-side or table view, metrics, CSV download |
+| `/chat/` | **Chat**: multi-turn chat with one model (you play the patient), streamed replies |
 | `/dataset/` | **Dataset manager**: add, edit, delete and search messages, and import/export CSV |
 | `/rate/` | **Clinician rating**: blind human scoring of past runs, and the ratings CSV |
 | `/help/` | How to use the app and how each metric works |
@@ -79,6 +80,21 @@ re-runs just that model and merges the answer into the same run — useful mid-d
 Tune in `.env`: `OPENROUTER_MAX_ATTEMPTS` (default 3), `OPENROUTER_RETRY_BACKOFF` (seconds, doubles each try),
 `OPENROUTER_TIMEOUT`, and `LLM_MAX_TOKENS` (default 1500; too low cuts off models that think before answering).
 
+## Chat
+
+The **Chat** page is a normal multi-turn chat. You play the patient; the model answers as a health information assistant.
+
+- Pick the model from the menu at the top. You can switch mid-chat, and each reply shows which model wrote it.
+- Replies stream in word by word. **Stop** ends a reply early and keeps what was written. **Regenerate** replaces the
+  last reply using the model currently picked.
+- **Memory** is the chat history in the database. With each new message the model gets the system prompt plus the
+  most recent `CHAT_HISTORY_MESSAGES` messages (default 20). Failed replies are left out. No external memory system is used.
+- **Export** downloads a chat as JSON, with model, timing and token counts for each reply.
+- Temporary failures are retried until the first words arrive. After that an error is shown with a **Try again** button.
+- Mock mode works here too: replies are canned and no API call is made.
+
+Edit the system prompt in `apps/chat/services/prompts.py`. Chats are local and shared by everyone using this copy of the app.
+
 ## Clinician rating (human evaluation)
 
 The **Rate** page collects human scores for runs you have already generated:
@@ -130,6 +146,8 @@ apps/
   dataset/               PatientMessage model, dataset manager, seed_dataset command
   llms/                  LLMModel model, OpenRouter client, seed_models / check_models
   ratings/               human rating: blind labels, rubric, Rate page, ratings CSV
+  chat/                  multi-turn chat: Conversation/ChatMessage models, history + streaming (services/chat.py),
+                         system prompt (services/prompts.py)
   comparisons/
     services/prompts.py  prompts for each task + judge criteria    <- edit prompts here
     services/runner.py   calls models in parallel, runs analysis + judge, saves results

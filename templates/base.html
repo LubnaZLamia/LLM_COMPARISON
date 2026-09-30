@@ -25,6 +25,8 @@
       {% with p=request.path %}
       <a href="{% url 'comparisons:compare' %}" class="{% if p == '/' or '/runs/' in p %}active{% endif %}">
         <svg class="ico"><use href="#i-home"></use></svg>Home</a>
+      <a href="{% url 'chat:new' %}" class="{% if '/chat/' in p %}active{% endif %}">
+        <svg class="ico"><use href="#i-message"></use></svg>Chat</a>
       <a href="{% url 'dataset:list' %}" class="{% if '/dataset/' in p %}active{% endif %}">
         <svg class="ico"><use href="#i-database"></use></svg>Dataset</a>
       <a href="{% url 'ratings:list' %}" class="{% if '/rate/' in p %}active{% endif %}">

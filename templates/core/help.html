@@ -49,6 +49,19 @@
     <p class="hint">Word matching and keyword checks are quick and transparent, but they can miss paraphrases. The logic is in <code>apps/comparisons/services/analysis.py</code>.</p>
   </section>
 
+  <section class="card prose" id="chat">
+    <h2><svg class="ico"><use href="#i-message"></use></svg>Chat</h2>
+    <p>The <a href="{% url 'chat:new' %}">Chat</a> page is a multi-turn conversation with one model. You play the patient.</p>
+    <ul>
+      <li><strong>Pick a model</strong> from the menu at the top. You can switch models mid-chat; each reply shows which model wrote it.</li>
+      <li><strong>Replies stream in</strong> as the model writes them. <em>Stop</em> ends a reply early and keeps what was written.</li>
+      <li><strong>Regenerate</strong> replaces the last reply, with the model currently picked. A failed reply shows <em>Try again</em>.</li>
+      <li><strong>Memory:</strong> every message is saved. With each new message the model gets the most recent 20 messages (<code>CHAT_HISTORY_MESSAGES</code> in <code>.env</code>). Failed replies are left out.</li>
+      <li><strong>Export</strong> downloads a chat as JSON, with model, timing and token counts for each reply.</li>
+    </ul>
+    <p class="hint">Chats are stored on this computer and shared by everyone who uses this copy of the app.</p>
+  </section>
+
   <section class="card prose" id="rating">
     <h2><svg class="ico"><use href="#i-star"></use></svg>Clinician rating</h2>
     <p>The <a href="{% url 'ratings:list' %}">Rate</a> page collects human scores for outputs you have already generated.</p>
@@ -77,11 +90,13 @@
     <h2><svg class="ico"><use href="#i-pencil"></use></svg>Where to change things</h2>
     <ul>
       <li>Prompts and judge criteria: <code>apps/comparisons/services/prompts.py</code></li>
+      <li>Chat system prompt: <code>apps/chat/services/prompts.py</code></li>
       <li>Metrics and ground-truth matching: <code>apps/comparisons/services/analysis.py</code></li>
       <li>Dataset import: <code>python manage.py import_datasets --questions data/questions.csv --responses data/responses.csv</code></li>
       <li>Temperature, max tokens, judge model: <code>.env</code></li>
       <li>Models: <a href="/admin/llms/llmmodel/">Admin → LLM models</a></li>
       <li>Past runs: <a href="/admin/comparisons/comparisonrun/">Admin → Comparison runs</a></li>
+      <li>Past chats: <a href="/admin/chat/conversation/">Admin → Conversations</a></li>
     </ul>
   </section>
 </div>

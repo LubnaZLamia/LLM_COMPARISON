@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "apps.llms",
     "apps.comparisons",
     "apps.ratings",
+    "apps.chat",
 ]
 
 MIDDLEWARE = [
@@ -104,6 +105,9 @@ JUDGE_MODEL = os.getenv("JUDGE_MODEL", "").strip()
 # Ground-truth matching: how much of a clinician question's wording must appear
 # in a model question before it counts as asked (0-1). Lower = more generous.
 GT_MATCH_RECALL = float(os.getenv("GT_MATCH_RECALL", "0.5"))
+# Chat memory: how many recent messages are sent back to the model with each new one.
+# Older messages stay saved, but the model no longer sees them. Keeps long chats fast and cheap.
+CHAT_HISTORY_MESSAGES = int(os.getenv("CHAT_HISTORY_MESSAGES", "20"))
 # When true, no API calls are made; each model returns a canned answer.
 # Handy for working on the UI without spending credits.
 LLM_MOCK_MODE = env_bool("LLM_MOCK_MODE", False)
