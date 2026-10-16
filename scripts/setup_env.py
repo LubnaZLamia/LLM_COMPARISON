@@ -65,7 +65,8 @@ def main():
         print(" Raised LLM_MAX_TOKENS to 1500 so long answers aren't cut off.")
 
     for key, default in (("OPENROUTER_MAX_ATTEMPTS", "3"), ("OPENROUTER_RETRY_BACKOFF", "1.0"),
-                         ("JUDGE_MODEL", ""), ("GT_MATCH_RECALL", "0.5")):
+                         ("JUDGE_MODEL", ""), ("GT_MATCH_RECALL", "0.5"),
+                         ("MATCH_METHOD", "both"), ("MATCH_MODEL", "")):
         if get(lines, key) is None:
             set_value(lines, key, default)
 

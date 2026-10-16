@@ -127,12 +127,18 @@ def _once(model_id: str, system: str, user: str, temperature: float | None) -> C
     )
 
 
-def chat(model_id: str, system: str, user: str, temperature: float | None = None) -> ChatResult:
-    """Send one system+user prompt to `model_id`, retrying temporary failures."""
+def chat(model_id: str, system: str, user: str, temperature: float | None = None,
+         max_attempts: int | None = None) -> ChatResult:
+    """Send one system+user prompt to `model_id`, retrying temporary failures.
+
+    `max_attempts` overrides the configured retry count. Side calls that only
+    enrich a metric pass 1: a slow failure there would hold up the whole page,
+    and they have a fallback that costs nothing.
+    """
     if not settings.OPENROUTER_API_KEY:
         raise OpenRouterError("OPENROUTER_API_KEY is not set. Add it to your .env file, or set LLM_MOCK_MODE=true.")
 
-    attempts = max(1, settings.OPENROUTER_MAX_ATTEMPTS)
+    attempts = max(1, settings.OPENROUTER_MAX_ATTEMPTS if max_attempts is None else max_attempts)
     last: RetryableError | None = None
     for attempt in range(1, attempts + 1):
         try:

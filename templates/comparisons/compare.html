@@ -16,11 +16,39 @@
   {% endif %}
 
   <div class="setup-grid">
-    {# ---------------- 1. Patient message ---------------- #}
+    {# ---------------- 1. Task ---------------- #}
+    <section class="card">
+      <header class="card-head">
+        <svg class="head-icon"><use href="#i-list"></use></svg>
+        <div><h2>1. Task</h2><p>Choose what you want the LLMs to generate.</p></div>
+      </header>
+      <div class="option-list">
+        <label class="task-option {% if form.task.value == tasks.FOLLOWUP %}selected{% endif %}">
+          <input type="radio" name="task" value="{{ tasks.FOLLOWUP }}" {% if form.task.value == tasks.FOLLOWUP %}checked{% endif %}>
+          <span class="radio-dot"></span>
+          <span class="task-icon"><svg class="ico"><use href="#i-help"></use></svg></span>
+          <span class="option-body">
+            <strong>Generate Follow-up Questions</strong>
+            <small>Generate relevant follow-up questions based on the patient message.</small>
+          </span>
+        </label>
+        <label class="task-option {% if form.task.value == tasks.RESPONSE %}selected{% endif %}">
+          <input type="radio" name="task" value="{{ tasks.RESPONSE }}" {% if form.task.value == tasks.RESPONSE %}checked{% endif %}>
+          <span class="radio-dot"></span>
+          <span class="task-icon"><svg class="ico"><use href="#i-message"></use></svg></span>
+          <span class="option-body">
+            <strong>Generate General Response</strong>
+            <small>Generate a helpful and appropriate response to the patient message.</small>
+          </span>
+        </label>
+      </div>
+    </section>
+
+    {# ---------------- 2. Patient message ---------------- #}
     <section class="card">
       <header class="card-head">
         <svg class="head-icon"><use href="#i-message"></use></svg>
-        <div><h2>1. Patient Message</h2><p>Select an example from the dataset or write your own.</p></div>
+        <div><h2>2. Patient Message</h2><p>Select an example message, or write your own.</p></div>
       </header>
 
       <div class="tabs" role="tablist">
@@ -30,9 +58,8 @@
 
       <div class="tab-panel" data-panel="example">
         <div class="input-icon"><svg class="ico"><use href="#i-search"></use></svg>
-        <input type="search" class="example-search" id="example-search" placeholder="Search {{ examples|length }} messages…" autocomplete="off"></div>
+        <input type="search" class="example-search" id="example-search" placeholder="Search messages…" autocomplete="off"></div>
         <div class="list-tools">
-          <label class="gt-filter"><input type="checkbox" id="gt-only"> Ground truth only</label>
           <span class="hint search-hint" id="search-count"></span>
         </div>
         <div class="option-list" id="example-list">
@@ -43,16 +70,16 @@
               <span class="option-body">
                 <span class="option-text">"{{ ex.text|truncatechars:150 }}"</span>
                 <span class="chips">
+                  {# every message in this list has ground truth for the chosen task, so no per-row badge #}
                   <span class="chip">{{ ex.get_category_display }}</span>
-                  {% if ex.reference_followup %}<span class="chip chip-gt" title="Clinician follow-up questions available">Q</span>{% endif %}
-                  {% if ex.reference_response %}<span class="chip chip-gt" title="Clinician reply available">Reply</span>{% endif %}
-                  {% if ex.ehr_summary %}<span class="chip chip-ehr" title="Chart summary available">EHR</span>{% endif %}
+                  {% if ex.ehr_summary %}<span class="chip chip-ehr" title="Chart summary sent to the models">EHR</span>{% endif %}
                 </span>
               </span>
             </label>
           {% empty %}
             <div class="empty">No example messages yet. <a href="{% url 'dataset:create' %}">Add one</a> or run <code>python manage.py seed_dataset</code>.</div>
           {% endfor %}
+          <div class="empty" id="no-matches" hidden>No message matches your search.</div>
         </div>
       </div>
 
@@ -72,28 +99,7 @@
         <label class="check-inline">
           <input type="checkbox" name="save_to_dataset"> Save this message to the dataset
         </label>
-      </div>
-    </section>
-
-    {# ---------------- 2. Task ---------------- #}
-    <section class="card">
-      <header class="card-head">
-        <svg class="head-icon"><use href="#i-list"></use></svg>
-        <div><h2>2. Task</h2><p>Choose what you want the LLMs to generate.</p></div>
-      </header>
-      <div class="option-list">
-        <label class="task-option {% if form.task.value == tasks.FOLLOWUP %}selected{% endif %}">
-          <input type="radio" name="task" value="{{ tasks.FOLLOWUP }}" {% if form.task.value == tasks.FOLLOWUP %}checked{% endif %}>
-          <span class="radio-dot"></span>
-          <span class="task-icon">?</span>
-          <span class="option-body"><strong>Generate Follow-up Questions</strong><small>Generate relevant follow-up questions based on the patient message.</small></span>
-        </label>
-        <label class="task-option {% if form.task.value == tasks.RESPONSE %}selected{% endif %}">
-          <input type="radio" name="task" value="{{ tasks.RESPONSE }}" {% if form.task.value == tasks.RESPONSE %}checked{% endif %}>
-          <span class="radio-dot"></span>
-          <span class="task-icon"><svg class="ico"><use href="#i-message"></use></svg></span>
-          <span class="option-body"><strong>Generate General Response</strong><small>Generate a helpful and appropriate response to the patient message.</small></span>
-        </label>
+        <p class="hint"><svg class="ico"><use href="#i-info"></use></svg>Your own message is not scored against a clinician answer. Every other metric still works.</p>
       </div>
     </section>
 

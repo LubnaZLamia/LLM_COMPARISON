@@ -57,9 +57,15 @@ class AnalysisTests(TestCase):
         ])]
         picks = pick_models(cat)
         self.assertEqual(picks["OpenAI"][0], "openai/gpt-5")
-        self.assertEqual(picks["Anthropic"][0], "anthropic/claude-sonnet-4.5")
+        # Anthropic: the cheap Haiku tier, not the flagship, and not an alias or batch id.
+        self.assertEqual(picks["Anthropic"][0], "anthropic/claude-haiku-4.5")
         self.assertEqual(picks["Google"][0], "google/gemini-2.5-pro")
         self.assertNotIn("Meta", picks)
+        self.assertNotIn("Mistral", picks)   # removed from the default line-up
+
+    def test_haiku_falls_back_to_another_claude_when_there_is_none(self):
+        cat = [{"id": "anthropic/claude-sonnet-4.5", "created": 1}, {"id": "anthropic/claude-opus-4.5", "created": 2}]
+        self.assertEqual(pick_models(cat)["Anthropic"][0], "anthropic/claude-sonnet-4.5")
 
 
 class ModelMarkTests(TestCase):
@@ -169,10 +175,27 @@ class RepairModelsTests(TestCase):
         self.assertEqual(old.display_name, "Claude Sonnet 4.5")
         self.assertFalse(orphan.is_active)
 
+    def test_dropped_providers_are_hidden_on_the_next_start(self):
+        """Mistral was taken out of the line-up: --repair hides it but keeps the row,
+        so its past runs still make sense."""
+        gone = LLMModel.objects.create(display_name="Mistral Large", provider="Mistral",
+                                       openrouter_id="mistralai/mistral-large", order=5)
+        kept = LLMModel.objects.create(display_name="GPT-4o", provider="OpenAI",
+                                       openrouter_id="openai/gpt-4o", order=1)
+        SeedModels().drop_unconfigured()
+        gone.refresh_from_db(); kept.refresh_from_db()
+        self.assertFalse(gone.is_active)
+        self.assertTrue(kept.is_active)
+        self.assertTrue(LLMModel.objects.filter(pk=gone.pk).exists())  # history intact
+
 
 class CompareViewTests(TestCase):
     def setUp(self):
-        self.msg = PatientMessage.objects.create(text="I feel dizzy after my medication.", category=Category.MEDICATION)
+        # Every message offered in the list carries ground truth for at least one task.
+        self.msg = PatientMessage.objects.create(
+            text="I feel dizzy after my medication.", category=Category.MEDICATION,
+            reference_followup="Which medication are you taking?\nWhen did the dizziness start?",
+        )
         self.a = LLMModel.objects.create(display_name="Model A", provider="X", openrouter_id="x/a", order=1, is_judge=True)
         self.b = LLMModel.objects.create(display_name="Model B", provider="Y", openrouter_id="y/b", order=2)
         self.c = LLMModel.objects.create(display_name="Model C", provider="Z", openrouter_id="z/c", order=3)
@@ -195,6 +218,7 @@ class CompareViewTests(TestCase):
 
         with patch("apps.llms.services.openrouter.chat", side_effect=fake_chat), \
              patch("apps.comparisons.services.runner.chat", side_effect=fake_chat), \
+             patch("apps.comparisons.services.matcher.chat", side_effect=fake_chat), \
              patch("apps.comparisons.services.judge.chat", side_effect=fake_chat):
             r = self.client.post(reverse("comparisons:compare"), {
                 "source": "example", "message": self.msg.pk, "task": Task.FOLLOWUP,
@@ -248,17 +272,49 @@ class CompareViewTests(TestCase):
         self.assertTrue(all("gt_score" in o.analysis for o in run.outputs.all()))
         self.assertContains(self.client.get(reverse("comparisons:run", args=[run.pk])), "Clinician Match")
 
-        # A message with questions but no clinician reply: the card explains itself.
+    @override_settings(LLM_MOCK_MODE=True)
+    def test_each_task_only_accepts_its_own_dataset(self):
+        """A message with questions but no clinician reply can't be run as a reply task."""
         questions_only = PatientMessage.objects.create(
             text="Knee pain after running.", category=Category.SYMPTOMS,
             reference_followup="How long has it hurt?\nAny swelling?",
         )
-        self.client.post(reverse("comparisons:compare"), {
+        before = ComparisonRun.objects.count()
+        page = self.client.post(reverse("comparisons:compare"), {
             "source": "example", "message": questions_only.pk, "task": Task.RESPONSE, "models": [self.a.pk],
+        })
+        self.assertContains(page, "has no clinician reply")
+        self.assertEqual(ComparisonRun.objects.count(), before)  # nothing was run
+
+        # The same message is fine for the task the clinician did answer.
+        self.client.post(reverse("comparisons:compare"), {
+            "source": "example", "message": questions_only.pk, "task": Task.FOLLOWUP, "models": [self.a.pk],
+        })
+        self.assertEqual(ComparisonRun.objects.count(), before + 1)
+
+    @override_settings(LLM_MOCK_MODE=True)
+    def test_list_is_scoped_to_the_selected_task(self):
+        PatientMessage.objects.create(text="Cough.", category=Category.SYMPTOMS,
+                                      reference_response="Please call the office.")
+        PatientMessage.objects.create(text="No ground truth at all.", category=Category.OTHER)
+        page = self.client.get(reverse("comparisons:compare")).content.decode()
+        # Each message is tagged with the tasks it can be scored for; the page never
+        # spells any of this out, it just filters the list.
+        self.assertIn('data-gt-followup="1" data-gt-response="0"', page)   # self.msg
+        self.assertIn('data-gt-followup="0" data-gt-response="1"', page)   # the cough message
+        self.assertNotIn("No ground truth at all", page)                   # never offered
+        for leak in ("clinician questions", "clinician reply", "ground truth", "dataset for"):
+            self.assertNotIn(leak, page.lower())
+
+    @override_settings(LLM_MOCK_MODE=True)
+    def test_your_own_message_says_why_there_is_no_ground_truth(self):
+        self.client.post(reverse("comparisons:compare"), {
+            "source": "custom", "custom_text": "My elbow aches.", "custom_category": Category.SYMPTOMS,
+            "task": Task.RESPONSE, "models": [self.a.pk],
         })
         page = self.client.get(reverse("comparisons:run", args=[ComparisonRun.objects.latest("id").pk]))
         self.assertContains(page, "Clinician Match")
-        self.assertContains(page, "no clinician reply in the dataset")
+        self.assertContains(page, "You wrote this message yourself")
 
     @override_settings(LLM_MOCK_MODE=True)
     def test_ehr_reaches_the_prompt(self):
@@ -286,7 +342,8 @@ class CompareViewTests(TestCase):
                 raise OpenRouterError("HTTP 429: provider busy (gave up after 3 attempts)")
             return ChatResult(text="1. Which medication are you taking?\n2. Any fever?", latency_ms=10)
 
-        with patch("apps.comparisons.services.runner.chat", side_effect=first_pass):
+        with patch("apps.comparisons.services.runner.chat", side_effect=first_pass), \
+             patch("apps.comparisons.services.matcher.chat", side_effect=first_pass):
             self.client.post(reverse("comparisons:compare"), {
                 "source": "example", "message": self.msg.pk, "task": Task.FOLLOWUP,
                 "models": [self.a.pk, self.b.pk],
@@ -301,7 +358,8 @@ class CompareViewTests(TestCase):
             calls.append(model_id)
             return ChatResult(text="1. When did it start?\n2. Any fever?", latency_ms=8)
 
-        with patch("apps.comparisons.services.runner.chat", side_effect=second_pass):
+        with patch("apps.comparisons.services.runner.chat", side_effect=second_pass), \
+             patch("apps.comparisons.services.matcher.chat", side_effect=second_pass):
             self.client.post(reverse("comparisons:retry", args=[run.pk]))
         self.assertEqual(calls, ["y/b"])  # only the failed model was called again
         self.assertEqual(run.outputs.count(), 2)

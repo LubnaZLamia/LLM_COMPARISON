@@ -104,10 +104,21 @@ OPENROUTER_RETRY_BACKOFF = float(os.getenv("OPENROUTER_RETRY_BACKOFF", "1.0"))
 JUDGE_MODEL = os.getenv("JUDGE_MODEL", "").strip()
 # Ground-truth matching: how much of a clinician question's wording must appear
 # in a model question before it counts as asked (0-1). Lower = more generous.
+# Used by the lexical (baseline) matcher only.
 GT_MATCH_RECALL = float(os.getenv("GT_MATCH_RECALL", "0.5"))
 # Chat memory: how many recent messages are sent back to the model with each new one.
 # Older messages stay saved, but the model no longer sees them. Keeps long chats fast and cheap.
 CHAT_HISTORY_MESSAGES = int(os.getenv("CHAT_HISTORY_MESSAGES", "20"))
+
+# --- Clinician matching -----------------------------------------------------
+# How the clinician comparison is scored:
+#   lexical  word overlap only (the original baseline)
+#   meaning  a small model aligns the two texts, so a paraphrase still counts
+#   both     compute both and show them side by side (the default)
+MATCH_METHOD = os.getenv("MATCH_METHOD", "both").strip().lower()
+# The model that does the alignment. Blank picks a cheap active model.
+# It goes through the same endpoint and key as every other call.
+MATCH_MODEL = os.getenv("MATCH_MODEL", "").strip()
 # When true, no API calls are made; each model returns a canned answer.
 # Handy for working on the UI without spending credits.
 LLM_MOCK_MODE = env_bool("LLM_MOCK_MODE", False)

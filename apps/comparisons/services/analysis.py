@@ -200,14 +200,76 @@ def analyze_responses(outputs: dict[int, str]) -> dict[int, dict]:
     return results
 
 
-def analyze(task: str, outputs: dict[int, str], reference: str = "") -> dict[int, dict]:
-    """Analyse every output. `reference` is the clinician ground truth, when the dataset has one."""
+def items_of(task: str, text: str) -> list[str]:
+    """Split a text into the units the clinician comparison works on."""
+    if task == Task.FOLLOWUP:
+        return extract_questions(text) or ([text] if text.strip() else [])
+    return metrics.split_units(text)
+
+
+def reference_items(task: str, reference: str) -> list[str]:
+    """Split the clinician's answer the same way: one question per line, or sentences."""
+    if task == Task.FOLLOWUP:
+        return [q.strip() for q in reference.splitlines() if q.strip()]
+    return metrics.split_units(reference)
+
+
+def _meaning_ground_truth(task: str, outputs: dict[int, str], reference: str) -> dict[int, dict]:
+    """Clinician comparison by meaning. Returns {} if the alignment call is unavailable."""
+    from . import matcher  # imported here so the lexical path never touches the API
+
+    gold = reference_items(task, reference)
+    if not gold or not matcher.available():
+        return {}
+    try:
+        scored = matcher.match_many(gold, dict(outputs), task)
+    except Exception:  # offline, no key, rate limited — the lexical score still stands
+        return {}
+    return {
+        key: {
+            "gt_score": result.score,
+            "gt_matched": result.matched,
+            "gt_total": result.total,
+            "gt_missed": result.missed,
+            "gt_covered": result.covered,
+            "gt_method": "meaning",
+        }
+        for key, result in scored.items()
+    }
+
+
+def analyze(task: str, outputs: dict[int, str], reference: str = "", method: str | None = None) -> dict[int, dict]:
+    """Analyse every output. `reference` is the clinician ground truth, when the dataset has one.
+
+    `method` is one of lexical / meaning / both (default: the MATCH_METHOD setting).
+    In `both`, the meaning score is the headline and the lexical score is kept
+    beside it under `*_lexical` keys as the baseline to compare against.
+    """
     if not outputs:
         return {}
+    method = (method or settings.MATCH_METHOD).lower()
     is_followup = task == Task.FOLLOWUP
     results = analyze_followups(outputs) if is_followup else analyze_responses(outputs)
-    if reference.strip():
-        ground_truth = ground_truth_for_questions if is_followup else ground_truth_for_response
-        for key, text in outputs.items():
-            results[key].update(ground_truth(text, reference))
+
+    if not reference.strip():
+        return results
+
+    lexical = ground_truth_for_questions if is_followup else ground_truth_for_response
+    lexical_results = {key: lexical(text, reference) for key, text in outputs.items()}
+    semantic_results = (_meaning_ground_truth(task, outputs, reference)
+                        if method in ("meaning", "both") else {})
+
+    for key in outputs:
+        lex = dict(lexical_results.get(key) or {})
+        sem = semantic_results.get(key)
+        if method == "lexical" or not sem:
+            if lex:
+                lex["gt_method"] = "lexical"
+                if method != "lexical":
+                    lex["gt_fallback"] = True   # semantic was asked for but unavailable
+            results[key].update(lex)
+            continue
+        results[key].update(sem)
+        if method == "both" and lex:
+            results[key].update({f"{k}_lexical": v for k, v in lex.items()})
     return results

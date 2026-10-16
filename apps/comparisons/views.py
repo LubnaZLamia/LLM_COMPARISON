@@ -1,6 +1,7 @@
 import csv
 
 from django.contrib import messages
+from django.db.models import Case, IntegerField, Value, When
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -51,9 +52,21 @@ def compare(request, pk=None):
 
     selected_models = {str(getattr(m, "pk", m)) for m in (form["models"].value() or [])}
     selected_message = str(form["message"].value() or "")
-    featured = PatientMessage.objects.filter(is_featured=True).order_by("-reference_followup", "category", "id")
-    if not selected_message and form["source"].value() != CompareForm.SOURCE_CUSTOM and featured.exists():
-        selected_message = str(featured.first().pk)
+
+    # Each task has its own dataset: a message is only offered for a task when the
+    # clinician answered that task, so every run can be scored. Messages with no
+    # ground truth at all never appear in the list.
+    # Richest cases first: real dataset messages carry a chart summary, the built-in
+    # demo messages don't, so this floats the interesting ones to the top of the list.
+    featured = (PatientMessage.objects.filter(is_featured=True)
+                .exclude(reference_followup="", reference_response="")
+                .annotate(has_chart=Case(When(ehr_summary="", then=Value(1)), default=Value(0),
+                                         output_field=IntegerField()))
+                .order_by("has_chart", "category", "id"))
+    task_value = form["task"].value() or Task.FOLLOWUP
+    for_task = featured.exclude(**{"reference_followup" if task_value == Task.FOLLOWUP else "reference_response": ""})
+    if not selected_message and form["source"].value() != CompareForm.SOURCE_CUSTOM and for_task.exists():
+        selected_message = str(for_task.first().pk)
 
     context = {
         "form": form,

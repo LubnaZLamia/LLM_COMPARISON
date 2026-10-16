@@ -8,8 +8,8 @@
   <section class="card prose">
     <h2><svg class="ico"><use href="#i-play"></use></svg>Using the app</h2>
     <ol>
-      <li><strong>Patient Message:</strong> pick an example from the dataset, or write your own.</li>
       <li><strong>Task:</strong> ask the models for follow-up questions or a general reply.</li>
+      <li><strong>Patient Message:</strong> select an example message, or write your own.</li>
       <li><strong>Select LLMs:</strong> tick the models to compare. They all get the same prompt. Optionally tick <em>Score with judge model</em>.</li>
       <li><strong>Generate Outputs:</strong> the models are called in parallel. Each run gets its own link you can bookmark.</li>
       <li><strong>Rate (optional):</strong> send the run to the <a href="{% url 'ratings:list' %}">Rate</a> page for blind clinician scoring.</li>
@@ -34,12 +34,14 @@
       <dt>Reading Grade Level ↓</dt><dd>Flesch-Kincaid US school grade. 8 or below is usually recommended for patient materials.</dd>
       <dt>Key Elements ↑</dt><dd>Does the reply give emergency guidance, point the patient to their care team, and sound empathetic?</dd>
     </dl>
-    <p><strong>Ground truth (dataset messages only)</strong></p>
+    <p><strong>Compared with the clinician (example messages only)</strong></p>
     <dl>
       <dt>Clinician Questions Matched ↑</dt><dd>For the questions task: the share of the clinician's own follow-up questions that the model also asked. One broad question ("any nausea or vomiting?") can cover two of the clinician's, and counts for both.</dd>
       <dt>Clinician Reply Coverage ↑</dt><dd>For the response task: the share of the points in the clinician's own reply that the model's reply also covers.</dd>
     </dl>
-    <p>This card only appears when the selected message carries clinician ground truth — the green badges in the example list show which do. Table view lists exactly what each model missed. Matching is by shared wording; make it stricter or looser with <code>GT_MATCH_RECALL</code> in <code>.env</code> (0.5 by default).</p>
+    <p>This card is filled in for every example message. It is only skipped when you write your own message, since there is no clinician answer to compare against. Table view lists exactly what each model missed, and the closest match it did find, with the similarity.</p>
+    <p><strong>How the match is made.</strong> A small model reads the clinician's questions and the model's answer and says which of the clinician's questions are covered, so a correct paraphrase still counts — "any blood in your stool?" and "have you noticed rectal bleeding?" match. It is asked only about coverage, never about quality, and never told which system wrote the answer. The card labelled <em>Clinician Match (words)</em> is the older word-overlap method, kept beside it as a baseline: where the two disagree, the difference is usually a paraphrase the word method missed. Set <code>MATCH_METHOD</code> in <code>.env</code> to <code>meaning</code>, <code>lexical</code> or <code>both</code>.</p>
+    <p class="hint">This is one extra call per output on the same key, tried once. If it fails, the card falls back to the word-overlap score rather than disappearing.</p>
     <p>When a message has a chart summary, it is sent to every model (and to the judge) along with the message, so they work from the same information the clinician had. The results page shows it under the patient message.</p>
 
     <p><strong>Judge score (optional)</strong></p>

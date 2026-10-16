@@ -27,6 +27,17 @@ class CompareForm(forms.Form):
         if data.get("source") == self.SOURCE_CUSTOM:
             if not (data.get("custom_text") or "").strip():
                 self.add_error("custom_text", "Write a patient message, or pick an example.")
-        elif not data.get("message"):
+            return data
+
+        message = data.get("message")
+        if not message:
             self.add_error("message", "Pick an example message, or write your own.")
+        # Each task has its own dataset. The page only lists eligible messages, but a
+        # stale form (task changed in another tab, back button, script) could still
+        # post a message the clinician never answered for this task.
+        elif not message.has_reference_for(data.get("task")):
+            wanted = ("clinician follow-up questions" if data.get("task") == Task.FOLLOWUP
+                      else "clinician reply")
+            self.add_error("message", f"That message has no {wanted}, so this task can't be scored "
+                                      f"against the clinician. Pick one from the list for this task.")
         return data

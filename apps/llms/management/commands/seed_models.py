@@ -27,22 +27,21 @@ SLOTS = [
     # provider, colour, badge, selected by default, [(include regex, extra exclude regex)] tried in order
     dict(provider="OpenAI", color="#10a37f", badge="O", selected=True, judge=True,
          rules=[(r"^openai/gpt-", r"pro|turbo|chat|instruct")]),
+    # Anthropic: the newest Haiku. The flagship Claude models cost about ten times as
+    # much per token on OpenRouter and this app makes one call per model per run.
     dict(provider="Anthropic", color="#d97706", badge="A", selected=True,
-         rules=[(r"^anthropic/claude-", r"haiku|opus"), (r"^anthropic/claude-", r"")]),
+         rules=[(r"^anthropic/claude-haiku", r""), (r"^anthropic/claude-", r"opus")]),
     dict(provider="Google", color="#2563eb", badge="G", selected=True,
          rules=[(r"^google/gemini-", r"")]),
     dict(provider="Meta", color="#7c3aed", badge="M", selected=False,
          rules=[(r"^meta-llama/llama-.*(70b|405b|maverick|scout)", r""), (r"^meta(-llama)?/", r"")]),
-    dict(provider="Mistral", color="#ea580c", badge="M", selected=False,
-         rules=[(r"^mistralai/mistral-(large|medium)", r""), (r"^mistralai/", r"")]),
 ]
 
 FALLBACK = {
     "OpenAI": ("openai/gpt-4o", "GPT-4o"),
-    "Anthropic": ("anthropic/claude-sonnet-4", "Claude Sonnet 4"),
+    "Anthropic": ("anthropic/claude-haiku-4.5", "Claude Haiku 4.5"),
     "Google": ("google/gemini-2.5-flash", "Gemini 2.5 Flash"),
     "Meta": ("meta-llama/llama-3.3-70b-instruct", "Llama 3.3 70B"),
-    "Mistral": ("mistralai/mistral-large", "Mistral Large"),
 }
 
 
@@ -89,6 +88,17 @@ class Command(BaseCommand):
         parser.add_argument("--repair", action="store_true",
                             help="Keep existing models, but replace any id that no longer exists on OpenRouter.")
 
+    def drop_unconfigured(self) -> None:
+        """Hide models from providers that are no longer in SLOTS (e.g. one removed on
+        purpose). They stay in the database — past runs keep working — but leave the
+        Compare page. Re-enable one any time in admin."""
+        providers = {slot["provider"] for slot in SLOTS}
+        for model in LLMModel.objects.filter(is_active=True).exclude(provider__in=providers):
+            model.is_active = False
+            model.save(update_fields=["is_active"])
+            self.stdout.write(self.style.WARNING(
+                f"  {model.openrouter_id} ({model.provider}) is no longer a configured provider; hid it."))
+
     def repair(self, catalogue: list[dict], picks: dict) -> None:
         available = {m["id"] for m in catalogue}
         stale = [m for m in LLMModel.objects.all() if m.openrouter_id not in available]
@@ -122,6 +132,7 @@ class Command(BaseCommand):
 
         # Existing setup: only swap out ids that OpenRouter no longer offers.
         if LLMModel.objects.exists() and opts["repair"] and not opts["refresh"]:
+            self.drop_unconfigured()
             if catalogue:
                 self.repair(catalogue, picks)
             return

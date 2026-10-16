@@ -25,37 +25,57 @@
     if (e.target.name === "task") syncSelected("task", ".task-option");
   });
 
-  // --- Filter the example messages, and flag ones without ground truth --------
+  // --- The message list follows the task chosen in step 1 ---------------------
+  // Only messages that can be scored for that task are offered. This is kept out
+  // of the interface copy on purpose: the list simply shows what is selectable.
   const search = document.getElementById("example-search");
-  const gtOnly = document.getElementById("gt-only");
   const exampleList = document.getElementById("example-list");
   if (exampleList) {
     const options = Array.from(exampleList.querySelectorAll(".option"));
     const count = document.getElementById("search-count");
+    const noMatches = document.getElementById("no-matches");
     const currentTask = () => document.querySelector('input[name="task"]:checked')?.value || "followup";
-    const hasGroundTruth = (o) =>
+    const inThisDataset = (o) =>
       (currentTask() === "followup" ? o.dataset.gtFollowup : o.dataset.gtResponse) === "1";
 
-    const apply = () => {
+    const apply = ({ taskChanged = false } = {}) => {
       const q = (search?.value || "").trim().toLowerCase();
-      const onlyGt = !!gtOnly?.checked;
+      const eligible = options.filter(inThisDataset);
       let shown = 0;
+      let selectionLost = false;
+
       options.forEach((o) => {
-        const gt = hasGroundTruth(o);
-        o.classList.toggle("no-gt", !gt);           // dimmed + "no ground truth" note
-        const hit = (!q || (o.dataset.search || "").includes(q)) && (!onlyGt || gt);
+        const input = o.querySelector('input[name="message"]');
+        const mine = inThisDataset(o);
+        if (!mine && input?.checked) {         // its dataset no longer applies
+          input.checked = false;
+          o.classList.remove("selected");
+          selectionLost = true;
+        }
+        const hit = mine && (!q || (o.dataset.search || "").includes(q));
         o.hidden = !hit;
         if (hit) shown++;
       });
-      if (count) {
-        count.textContent = q || onlyGt ? `${shown} of ${options.length} messages` : "";
+
+      // Never leave step 2 with nothing chosen: fall back to the first message
+      // of the task's dataset.
+      if (selectionLost || !exampleList.querySelector('input[name="message"]:checked')) {
+        const first = options.find((o) => inThisDataset(o) && !o.hidden) || eligible[0];
+        const input = first?.querySelector('input[name="message"]');
+        if (input) {
+          input.checked = true;
+          first.classList.add("selected");
+          if (taskChanged) first.scrollIntoView({ block: "nearest" });
+        }
       }
+
+      if (count) count.textContent = q ? `${shown} shown` : "";
+      if (noMatches) noMatches.hidden = shown > 0;
     };
 
-    search?.addEventListener("input", apply);
-    gtOnly?.addEventListener("change", apply);
-    // Re-flag when the task changes: ground truth differs per task.
-    document.querySelectorAll('input[name="task"]').forEach((r) => r.addEventListener("change", apply));
+    search?.addEventListener("input", () => apply());
+    document.querySelectorAll('input[name="task"]').forEach((r) =>
+      r.addEventListener("change", () => apply({ taskChanged: true })));
     apply();
   }
 

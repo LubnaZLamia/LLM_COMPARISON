@@ -131,25 +131,32 @@ def build(run) -> dict:
                     f"rates each output 1–5 on {criteria}. It costs one extra API call per model.",
         })
 
+    # The lexical baseline, shown beside the meaning score when both were computed.
+    if any(o.analysis.get("gt_score_lexical") is not None for o in ok):
+        panels.insert(0, _panel(ok, label="Clinician Match (words)", icon="type", direction="higher", scale=1,
+                                value=_a("gt_score_lexical"), display=lambda v: f"{v:.0%}",
+                                help="The original baseline: a clinician item counts as covered when half its "
+                                     "meaningful words appear in one model sentence. Kept so the meaning score "
+                                     "has something to be measured against."))
+
     # Ground truth: a card either way, so it is never a mystery why it is missing.
     gt_label = "Clinician Match"
     if run.has_reference and any(o.analysis.get("gt_score") is not None for o in ok):
-        gt_help = (
-            "Share of this patient's clinician-written follow-up questions that the model also asked. "
-            "Table view lists the ones each model missed."
-            if run.task == Task.FOLLOWUP else
-            "Share of the points in the clinician's own reply that the model's reply also covers. "
-            "Table view lists what each model left out."
-        )
+        by_meaning = any(o.analysis.get("gt_method") == "meaning" for o in ok)
+        subject = ("the clinician's own follow-up questions this model also asked"
+                   if run.task == Task.FOLLOWUP else
+                   "the points in the clinician's own reply this model's reply also covers")
+        gt_help = (f"How much of {subject}. "
+                   + ("Aligned by a small model reading both texts, so a correct paraphrase still counts. "
+                      if by_meaning else
+                      "Matched on shared wording, so a correct paraphrase can be missed. ")
+                   + "Table view lists what each model missed and its closest matches.")
         panels.insert(0, _panel(ok, label=gt_label, icon="target", direction="higher", scale=1, value=_a("gt_score"),
                                 display=lambda v: f"{v:.0%}", help=gt_help))
         highlights.insert(0, ("Closest to the clinician", "target", _winner(ok, _a("gt_score"), fmt=lambda v: f"{v:.0%} match")))
     else:
-        missing = ("This message has no clinician reply in the dataset, so there is nothing to compare against. "
-                   "Pick a message with the green “Reply ground truth” badge."
-                   if run.task == Task.RESPONSE else
-                   "This message has no clinician questions in the dataset, so there is nothing to compare against. "
-                   "Pick a message with the green “Q ground truth” badge.")
+        missing = ("There is no clinician answer for this message, so there is nothing to compare against. "
+                   "Pick an example message to see this score.")
         if not run.source_message_id:
             missing = "You wrote this message yourself, so there is no clinician answer to compare against."
         panels.insert(0, {"label": gt_label, "arrow": "↑", "rows": [], "placeholder": True, "icon": "target", "help": missing})
@@ -176,9 +183,15 @@ def details_for(run, out) -> list[tuple[str, str]]:
         return rows
     if a.get("gt_score") is not None:
         label = "Clinician questions matched" if run.task == Task.FOLLOWUP else "Clinician reply covered"
-        rows.append((label, f"{a['gt_matched']}/{a['gt_total']} ({a['gt_score']:.0%})"))
+        how = "by meaning" if a.get("gt_method") == "meaning" else "by wording"
+        rows.append((f"{label} ({how})", f"{a['gt_matched']}/{a['gt_total']} ({a['gt_score']:.0%})"))
+        if a.get("gt_score_lexical") is not None:
+            rows.append(("Same, by wording only (baseline)",
+                         f"{a['gt_matched_lexical']}/{a['gt_total_lexical']} ({a['gt_score_lexical']:.0%})"))
         if a.get("gt_missed"):
             rows.append(("Missed from ground truth", " · ".join(a["gt_missed"])))
+        if a.get("gt_covered"):
+            rows.append(("Covered from the clinician", " · ".join(a["gt_covered"])))
     if run.task == Task.FOLLOWUP:
         rows.append(("Questions", str(a.get("question_count", 0))))
         rows.append(("Topics", ", ".join(a.get("topics", [])) or "none"))
