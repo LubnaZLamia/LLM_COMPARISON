@@ -34,6 +34,7 @@ echo Installing / checking packages...
 "%VPY%" manage.py seed_dataset || goto :error
 "%VPY%" manage.py seed_models --repair || goto :error
 if exist "data\questions.csv" "%VPY%" manage.py import_datasets --questions data\questions.csv --responses data\responses.csv || goto :error
+if exist "exports\runs.csv" "%VPY%" manage.py import_exports || goto :error
 "%VPY%" manage.py ensure_admin || goto :error
 
 echo.

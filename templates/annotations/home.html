@@ -73,7 +73,7 @@
       {% endif %}
     </div>
   {% else %}
-    <p class="empty">Nothing to annotate yet. Generate outputs on the <a href="{% url 'comparisons:compare' %}">Compare page</a> for a message from the dataset (it needs the clinician's answer), with real models rather than mock mode.</p>
+    <p class="empty">Nothing to annotate yet. Load the shared runs with <code>python manage.py import_exports</code> (run.bat does this on every start), or generate outputs on the <a href="{% url 'comparisons:compare' %}">Compare page</a> for a dataset message with mock mode off.</p>
   {% endif %}
 </section>
 

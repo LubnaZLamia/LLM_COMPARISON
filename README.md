@@ -145,8 +145,16 @@ multiple choice:
 4. **How sure are you?** Sure, fairly sure, not sure. Plus an optional comment.
 
 Items come from the comparison runs already stored: every successful output of a run that has clinician ground
-truth. Mock-mode runs are left out. The queue gives each output to `ANNOTATION_TARGET` people (default 2) before it
-opens new ones, so inter-annotator agreement fills in early; *Skip* leaves an item for later.
+truth. Mock-mode runs are left out.
+
+Model outputs live in each person's own `db.sqlite3`, which git does not track, so shared runs travel as CSV files
+in `exports/` (`runs.csv`, `outputs.csv`, `ratings.csv`). `run.bat` / `run.sh` load them on every start with
+`python manage.py import_exports`: runs already in the database are skipped (matched on time, task and message),
+exported ids are kept when free so `/runs/27/` is the same run everywhere, and outputs without a stored
+clinician-match score get the word-overlap score. It calls no model, so it costs nothing.
+
+The queue gives each output to `ANNOTATION_TARGET` people (default 2) before it opens new ones, so inter-annotator
+agreement fills in early; *Skip* leaves an item for later.
 
 **Results** (`/annotate/results/`) shows, per model, the share of clinician items people marked as covered next to
 both automatic scores; how well each matcher (meaning and word overlap) agrees with people, per output (Spearman,
