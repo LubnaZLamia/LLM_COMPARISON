@@ -144,7 +144,7 @@ class FormTests(Fixture):
 class ViewTests(Fixture):
     def test_home_and_name(self):
         resp = self.client.get(reverse("annotations:home"))
-        self.assertContains(resp, "Enter a name to start")
+        self.assertContains(resp, "Please add your name or initials to begin")
         resp = self.client.post(reverse("annotations:home"), {"annotator": " Sam "})
         self.assertRedirects(resp, reverse("annotations:home"))
         self.assertEqual(self.client.session["annotator_name"], "Sam")
@@ -192,7 +192,7 @@ class ViewTests(Fixture):
         self.login()
         resp = self.client.post(reverse("annotations:item", args=[self.a.pk]), form_data(["yes"], coverage=None))
         self.assertEqual(resp.status_code, 200)
-        self.assertContains(resp, "Pick an answer for this item.")
+        self.assertContains(resp, "Please choose an answer for this item.")
         self.assertFalse(PeerAnnotation.objects.exists())
 
     def test_ineligible_output_is_404(self):

@@ -62,7 +62,7 @@ def next_item(request):
     annotator = _annotator(request)
     task = _task(request)
     if not annotator:
-        messages.info(request, "Add your name first. It is saved with each annotation.")
+        messages.info(request, "Please add your name first. It's saved with your answers.")
         return redirect(_with_task(reverse("annotations:home"), task) + "#annotator")
     skipped = set(request.session.get(SKIPPED_SESSION_KEY) or [])
     skip = request.GET.get("skip", "")
@@ -83,7 +83,7 @@ def annotate(request, pk):
     task = _task(request)
     annotator = _annotator(request)
     if not annotator:
-        messages.info(request, "Add your name first. You'll come straight back to this item.")
+        messages.info(request, "Please add your name first, and you'll come straight back to this item.")
         return redirect(_with_task(reverse("annotations:home"), task) + f"{'&' if task else '?'}next={pk}#annotator")
 
     items = queue.items_for(output)
@@ -97,7 +97,7 @@ def annotate(request, pk):
             messages.success(request, ("Updated your annotation." if existing else "Saved.")
                              + ("" if stop else " Here is the next one."))
             return redirect(_with_task(reverse("annotations:home" if stop else "annotations:next"), task))
-        messages.error(request, "Some answers are missing. They are marked below.")
+        messages.error(request, "A few answers are still missing. They're highlighted below.")
     else:
         form = AnnotationForm(items=items, instance=existing)
 

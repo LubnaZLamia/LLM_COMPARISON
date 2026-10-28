@@ -20,16 +20,16 @@ class AnnotationForm(forms.Form):
     """
 
     similar = forms.ChoiceField(choices=[("yes", "Yes"), ("no", "No")], widget=forms.RadioSelect,
-                                error_messages={"required": "Say whether the two texts are similar."})
+                                error_messages={"required": "Please choose yes or no."})
     coverage = forms.TypedChoiceField(choices=Coverage.choices, coerce=int, required=False, widget=forms.RadioSelect)
     reasons = forms.MultipleChoiceField(choices=[(k, label) for k, (label, _) in REASONS.items()],
                                         required=False, widget=forms.CheckboxSelectMultiple)
     other_reason = forms.CharField(max_length=200, required=False,
                                    widget=forms.TextInput(attrs={"placeholder": "What else is different?"}))
     extra = forms.ChoiceField(choices=Extra.choices, widget=forms.RadioSelect,
-                              error_messages={"required": "Say how much of B is not in A."})
+                              error_messages={"required": "Please choose one option."})
     confidence = forms.ChoiceField(choices=Confidence.choices, widget=forms.RadioSelect,
-                                   error_messages={"required": "Say how sure you are."})
+                                   error_messages={"required": "Please choose one option."})
     comment = forms.CharField(required=False, widget=forms.Textarea(attrs={"rows": 2, "placeholder": "Optional note"}))
     seconds = forms.IntegerField(required=False, min_value=0, widget=forms.HiddenInput)
 
@@ -41,7 +41,7 @@ class AnnotationForm(forms.Form):
         for i, _ in enumerate(items):
             self.fields[f"item_{i}"] = forms.ChoiceField(
                 choices=ITEM_CHOICES, widget=forms.RadioSelect,
-                error_messages={"required": "Pick an answer for this item."})
+                error_messages={"required": "Please choose an answer for this item."})
 
     @staticmethod
     def initial_from(instance: PeerAnnotation, items: list[str]) -> dict:
@@ -67,13 +67,13 @@ class AnnotationForm(forms.Form):
         data = super().clean()
         if data.get("similar") == "yes":
             if data.get("coverage") in (None, ""):
-                self.add_error("coverage", "Pick how much of A that B covers.")
+                self.add_error("coverage", "Please choose roughly how much of A is covered.")
             data["reasons"], data["other_reason"] = [], ""
         elif data.get("similar") == "no":
             if not data.get("reasons"):
-                self.add_error("reasons", "Pick at least one reason.")
+                self.add_error("reasons", "Please choose at least one reason.")
             elif "other" in data["reasons"] and not data.get("other_reason", "").strip():
-                self.add_error("other_reason", "Say what the other reason is.")
+                self.add_error("other_reason", "Please add a short note about the other reason.")
             data["coverage"] = None
         return data
 

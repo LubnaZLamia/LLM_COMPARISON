@@ -31,12 +31,12 @@ class Coverage(models.IntegerChoices):
 
 # Why the texts are not similar. Order here is the order on the form.
 REASONS = {
-    "different_topics": ("Different topics", "B talks about other things: other symptoms, other questions or other advice."),
-    "misses_most": ("Misses most of A", "B covers only a small part of what A asks or says."),
-    "too_general": ("Too general", "B stays vague, while A asks or says specific things."),
-    "contradicts": ("Says the opposite", "B asks or says the opposite of A, for example 'no need to come in' against 'please come in'."),
-    "wrong_kind": ("A different kind of text", "B is not the same kind of answer: a reply instead of questions, a refusal, or no real answer."),
-    "other": ("Other", "Something else. Please say what in the box."),
+    "different_topics": ("Different topics", "B seems to focus on other things, such as other symptoms, questions or advice."),
+    "misses_most": ("Misses most of A", "B covers only a small part of A."),
+    "too_general": ("Too general", "B is more general, while A is more specific."),
+    "contradicts": ("Says the opposite", "B points the other way, for example 'no need to come in' where A says 'please come in'."),
+    "wrong_kind": ("A different kind of text", "B is a different kind of answer, such as a reply instead of questions, or no real answer."),
+    "other": ("Other", "Something else. Feel free to describe it in the box."),
 }
 
 

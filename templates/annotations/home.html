@@ -7,8 +7,8 @@
 <div class="page-head">
   <div>
     <p class="eyebrow">Peer annotation</p>
-    <h1>How close is the AI to the clinician?</h1>
-    <p>Compare an AI answer with what a clinician wrote for the same patient. No medical knowledge needed: you judge whether the two texts say or ask the same things, not whether either one is right.</p>
+    <h1>Compare AI answers with the clinician's</h1>
+    <p>Thanks for helping. Each item shows what a clinician wrote and an AI's answer for the same patient, and we'd like to know how similar the two are. There are no right or wrong answers, and no medical background is needed.</p>
   </div>
   <div class="actions">
     <a class="btn-ghost" href="{% url 'annotations:results' %}{% if task %}?task={{ task }}{% endif %}"><svg class="ico"><use href="#i-chart"></use></svg>Results</a>
@@ -17,10 +17,10 @@
 </div>
 
 <ol class="how-steps">
-  <li><span class="step-dot">1</span><div><strong>Go through A, item by item</strong><small>Is each clinician question or point also in B, in any words?</small></div></li>
-  <li><span class="step-dot">2</span><div><strong>Say if they are similar overall</strong><small>Yes, and roughly how much. Or no, and why.</small></div></li>
-  <li><span class="step-dot">3</span><div><strong>Say how much of B is extra</strong><small>Content in B that A does not have.</small></div></li>
-  <li><span class="step-dot">4</span><div><strong>Save and go on</strong><small>The next item opens. Stop whenever you like.</small></div></li>
+  <li><span class="step-dot">1</span><div><strong>Look through A, item by item</strong><small>See whether each clinician question or point also appears in B, in any wording.</small></div></li>
+  <li><span class="step-dot">2</span><div><strong>Share your overall impression</strong><small>Whether they feel similar, and roughly how much.</small></div></li>
+  <li><span class="step-dot">3</span><div><strong>Note anything extra in B</strong><small>Content in B that isn't in A.</small></div></li>
+  <li><span class="step-dot">4</span><div><strong>Save and continue</strong><small>The next item opens. You can stop at any time.</small></div></li>
 </ol>
 
 <form method="post" class="card rater-bar" id="annotator">
@@ -35,7 +35,7 @@
   {% if annotator %}
     <p class="rater-now">Annotating as <strong>{{ annotator }}</strong> · {{ total_annotations }} annotation{{ total_annotations|pluralize }} from {{ annotators }} {{ annotators|pluralize:"person,people" }} so far</p>
   {% else %}
-    <p class="rater-now">Enter a name to start. It is stored with each annotation, so agreement between people can be measured. It is not a login.</p>
+    <p class="rater-now">Please add your name or initials to begin. It's saved with your answers so we can compare annotators. No login needed.</p>
   {% endif %}
 </form>
 

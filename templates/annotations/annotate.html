@@ -9,8 +9,8 @@
   <div>
     <a class="small-link" href="{% url 'annotations:home' %}{% if task %}?task={{ task }}{% endif %}">← Annotation home</a>
     <p class="eyebrow">Peer annotation · {% if is_followup %}Follow-up questions{% else %}Reply to the patient{% endif %}</p>
-    <h1>Do A and B {{ verb }} the same things?</h1>
-    <p>Annotating as <strong>{{ annotator }}</strong> · {{ progress.mine }} of {{ progress.total }} done{% if existing %} · <span class="text-warn">you annotated this item before, saving updates it</span>{% endif %}</p>
+    <h1>How similar are A and B?</h1>
+    <p>Annotating as <strong>{{ annotator }}</strong> · {{ progress.mine }} of {{ progress.total }} done{% if existing %} · you've annotated this one before, and saving will update it{% endif %}</p>
   </div>
   <div class="actions">
     <a class="btn-ghost" href="{% url 'annotations:next' %}?skip={{ output.pk }}{% if task %}&task={{ task }}{% endif %}" title="Leave this one for later"><svg class="ico"><use href="#i-refresh"></use></svg>Skip</a>
@@ -32,12 +32,12 @@
       <header class="ann-side-head">
         <span class="ann-tag ann-tag-a">A</span>
         <div><h2>The clinician's answer</h2>
-          <p class="muted">For each {{ noun }}: does B {{ verb }} it too?</p></div>
+          <p class="muted">For each {{ noun }}, does B {{ verb }} something similar?</p></div>
       </header>
       <div class="ann-key">
-        <span><b>Covered</b> B {{ verb }}s this, in any words, or inside a broader {{ noun }}.</span>
-        <span><b>Partly</b> B only touches on it, or less specifically.</span>
-        <span><b>Not covered</b> B does not {{ verb }} it.</span>
+        <span><b>Covered</b> B {{ verb }}s this too, in its own words or as part of a broader {{ noun }}.</span>
+        <span><b>Partly</b> B touches on this, but not fully.</span>
+        <span><b>Not covered</b> This doesn't seem to appear in B.</span>
       </div>
       <ol class="ann-items">
         {% for number, text, field in form.item_rows %}
@@ -72,7 +72,7 @@
   </div>
 
   <section class="card ann-step{% if form.similar.errors or form.coverage.errors or form.reasons.errors or form.other_reason.errors %} has-error{% endif %}">
-    <h3><span class="step-dot">2</span>Overall, are A and B similar?</h3>
+    <h3><span class="step-dot">2</span>Overall, would you say A and B are similar?</h3>
     <p class="ann-tally muted" id="ann-tally" hidden></p>
     <div class="ann-row">
       {% for radio in form.similar %}
@@ -82,7 +82,7 @@
     {% for e in form.similar.errors %}<p class="text-error ann-err">{{ e }}</p>{% endfor %}
 
     <div class="ann-branch" data-when="yes">
-      <p class="ann-q">How much of A does B cover?</p>
+      <p class="ann-q">Roughly how much of A does B cover?</p>
       <div class="ann-row">
         {% for radio in form.coverage %}
           <label class="ann-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
@@ -92,7 +92,7 @@
     </div>
 
     <div class="ann-branch" data-when="no">
-      <p class="ann-q">Why not? Pick all that apply.</p>
+      <p class="ann-q">What makes them different? Choose any that apply.</p>
       <div class="ann-reasons">
         {% for cb in form.reasons %}
           <label class="ann-reason">{{ cb.tag }}<span><b>{{ cb.choice_label }}</b><small>{% for key, pair in reasons.items %}{% if key == cb.data.value %}{{ pair.1 }}{% endif %}{% endfor %}</small></span></label>
@@ -105,8 +105,8 @@
   </section>
 
   <section class="card ann-step{% if form.extra.errors %} has-error{% endif %}">
-    <h3><span class="step-dot">3</span>How much of B is not in A at all?</h3>
-    <p class="muted ann-sub">Extra {{ noun }}s or content in B that has no counterpart in A.</p>
+    <h3><span class="step-dot">3</span>Is there anything in B that isn't in A?</h3>
+    <p class="muted ann-sub">Extra {{ noun }}s or content in B that A doesn't include.</p>
     <div class="ann-row">
       {% for radio in form.extra %}
         <label class="ann-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
@@ -116,7 +116,7 @@
   </section>
 
   <section class="card ann-step{% if form.confidence.errors %} has-error{% endif %}">
-    <h3><span class="step-dot">4</span>How sure are you about this item?</h3>
+    <h3><span class="step-dot">4</span>How confident do you feel about this one?</h3>
     <div class="ann-row">
       {% for radio in form.confidence %}
         <label class="ann-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
