@@ -1,0 +1,728 @@
+﻿run_id,created_at,task,category,source_message_id,models_run,models_failed,judge_model,mock_mode,message_text,ehr_summary,clinician_reference
+1,2026-09-16 22:34:20.915224,followup,medication,1,3,3,,False,I have been feeling dizzy after taking my medication.,,"Which medication are you taking, and what dose?
+When did you start this medication or last change the dose?
+When does the dizziness happen, and how long does it last?
+Do you feel lightheaded, or does the room spin?
+Have you fainted, fallen, or had chest pain, a racing heartbeat, or trouble speaking?
+Are you taking any other medications or supplements?"
+2,2026-09-16 22:49:59.368364,followup,medication,1,4,4,,False,I have been feeling dizzy after taking my medication.,,"Which medication are you taking, and what dose?
+When did you start this medication or last change the dose?
+When does the dizziness happen, and how long does it last?
+Do you feel lightheaded, or does the room spin?
+Have you fainted, fallen, or had chest pain, a racing heartbeat, or trouble speaking?
+Are you taking any other medications or supplements?"
+3,2026-09-18 00:59:40.557213,followup,medication,1,3,1,,False,I have been feeling dizzy after taking my medication.,,"Which medication are you taking, and what dose?
+When did you start this medication or last change the dose?
+When does the dizziness happen, and how long does it last?
+Do you feel lightheaded, or does the room spin?
+Have you fainted, fallen, or had chest pain, a racing heartbeat, or trouble speaking?
+Are you taking any other medications or supplements?"
+4,2026-09-19 19:04:13.211173,followup,symptoms,2,3,0,,False,I have had a headache for 3 days. Should I come in?,,"How severe is the headache on a scale of 0 to 10?
+Is this headache different from or worse than headaches you usually get?
+Did it start suddenly, like the worst headache of your life?
+Do you have fever, stiff neck, vision changes, weakness, numbness, or confusion?
+Have you had a recent head injury?
+What have you taken for it, and has it helped?"
+5,2026-09-19 19:05:14.569096,followup,medication,1,5,1,openai/gpt-4o,False,I have been feeling dizzy after taking my medication.,,"Which medication are you taking, and what dose?
+When did you start this medication or last change the dose?
+When does the dizziness happen, and how long does it last?
+Do you feel lightheaded, or does the room spin?
+Have you fainted, fallen, or had chest pain, a racing heartbeat, or trouble speaking?
+Are you taking any other medications or supplements?"
+6,2026-09-19 19:06:19.538871,response,medication,5,5,1,openai/gpt-4o,False,I started the new antibiotic yesterday and now I have an itchy rash.,,"Thank you for letting us know. A rash after starting an antibiotic can be an allergic reaction. Please don't take the next dose until you've spoken with your provider or pharmacist. If you have swelling of your face, lips, or throat, trouble breathing, or blistering or peeling skin, call 911 or go to the emergency room right away. Otherwise, please call the office today so we can review the medication and decide on an alternative."
+7,2026-09-19 19:07:04.871210,response,symptoms,,5,0,openai/gpt-4o,False,I have headache,,
+8,2026-09-22 21:02:37.242959,followup,medication,1,5,0,,False,I have been feeling dizzy after taking my medication.,,"Which medication are you taking, and what dose?
+When did you start this medication or last change the dose?
+When does the dizziness happen, and how long does it last?
+Do you feel lightheaded, or does the room spin?
+Have you fainted, fallen, or had chest pain, a racing heartbeat, or trouble speaking?
+Are you taking any other medications or supplements?"
+9,2026-09-22 21:03:21.623838,followup,medication,1,5,0,openai/gpt-4o,False,I have been feeling dizzy after taking my medication.,,"Which medication are you taking, and what dose?
+When did you start this medication or last change the dose?
+When does the dizziness happen, and how long does it last?
+Do you feel lightheaded, or does the room spin?
+Have you fainted, fallen, or had chest pain, a racing heartbeat, or trouble speaking?
+Are you taking any other medications or supplements?"
+10,2026-09-22 21:04:00.207640,followup,other,,5,0,openai/gpt-4o,False,I feel  dizzy,,
+11,2026-09-23 14:08:37.436136,followup,symptoms,2,3,1,openai/gpt-4o,False,I have had a headache for 3 days. Should I come in?,,"How severe is the headache on a scale of 0 to 10?
+Is this headache different from or worse than headaches you usually get?
+Did it start suddenly, like the worst headache of your life?
+Do you have fever, stiff neck, vision changes, weakness, numbness, or confusion?
+Have you had a recent head injury?
+What have you taken for it, and has it helped?"
+12,2026-09-23 14:14:11.589211,response,medication,5,3,0,openai/gpt-4o,False,I started the new antibiotic yesterday and now I have an itchy rash.,,"Thank you for letting us know. A rash after starting an antibiotic can be an allergic reaction. Please don't take the next dose until you've spoken with your provider or pharmacist. If you have swelling of your face, lips, or throat, trouble breathing, or blistering or peeling skin, call 911 or go to the emergency room right away. Otherwise, please call the office today so we can review the medication and decide on an alternative."
+13,2026-09-23 14:19:08.841464,response,symptoms,9,3,0,,False,I feel SUPER HAPPY,,
+14,2026-09-23 14:38:35.136448,response,symptoms,9,4,0,,False,I feel SUPER HAPPY,,
+15,2026-09-23 15:58:20.995371,followup,medication,1,3,0,,False,I have been feeling dizzy after taking my medication.,,"Which medication are you taking, and what dose?
+When did you start this medication or last change the dose?
+When does the dizziness happen, and how long does it last?
+Do you feel lightheaded, or does the room spin?
+Have you fainted, fallen, or had chest pain, a racing heartbeat, or trouble speaking?
+Are you taking any other medications or supplements?"
+16,2026-09-23 17:14:51.918143,followup,medication,1,3,0,openai/gpt-4o,False,I have been feeling dizzy after taking my medication.,,"Which medication are you taking, and what dose?
+When did you start this medication or last change the dose?
+When does the dizziness happen, and how long does it last?
+Do you feel lightheaded, or does the room spin?
+Have you fainted, fallen, or had chest pain, a racing heartbeat, or trouble speaking?
+Are you taking any other medications or supplements?"
+17,2026-09-23 17:19:52.980861,response,medication,1,3,0,openai/gpt-4o,False,I have been feeling dizzy after taking my medication.,,"I'm sorry you're feeling dizzy. Some medications, especially blood pressure medicines, can cause lightheadedness, particularly when standing up quickly. Please don't stop the medication on your own before talking with us. Get up slowly, sit down if you feel dizzy, and drink enough fluids. Please let us know which medication and dose you're taking and when the dizziness started so your provider can review it. If you faint, fall, or have chest pain, a fast or irregular heartbeat, weakness, or trouble speaking, call 911 or go to the emergency room right away."
+18,2026-09-23 17:22:40.686738,response,other,,3,0,openai/gpt-4o,False,I feel very happy,,
+19,2026-09-25 14:48:24.954889,followup,medication,1,3,0,,False,I have been feeling dizzy after taking my medication.,,"Which medication are you taking, and what dose?
+When did you start this medication or last change the dose?
+When does the dizziness happen, and how long does it last?
+Do you feel lightheaded, or does the room spin?
+Have you fainted, fallen, or had chest pain, a racing heartbeat, or trouble speaking?
+Are you taking any other medications or supplements?"
+20,2026-09-25 17:35:22.439711,followup,symptoms,33,3,0,,False,"Hey Doc, 
+
+I've been having this weird pelvic pressure/pain thing going on and I don't know what's causing it. It comes and goes, but when it hits, it's pretty intense. I've had it a few times over the past month or so, and I'm getting a bit worried. Sometimes it's just a dull ache, other times it's a sharp pain. I've tried to pay attention to when it happens, but it seems totally random - doesn't matter if I'm sitting, standing, or even sleeping. 
+
+I'm getting a bit concerned, so I thought I'd reach out to you. Should I come in and get checked out? I'd feel better if we could figure out what's going on.
+
+Thanks,
+Mike","###Demographics###
+Age: Between 50 - 55    
+Gender: Male
+    
+###Full Active Problem List###:
+Diabetes mellitus type 2, insulin dependent - Fracture of cervical spine without lesion of spinal cord - Closed fracture of thoracic vertebra - S/P vasectomy - ED (erectile dysfunction) - Mild non proliferative diabetic retinopathy - Insulin dependent type 2 diabetes mellitus - Branch retinal vein occlusion of left eye - GERD (gastroesophageal reflux disease) - OSA (obstructive sleep apnea) - Combined forms of age-related cataract of both eyes - Posttraumatic stress disorder - Major depressive disorder, recurrent episode, in full remission - Asthma - Presbyopia - Acute canaliculitis - Health care maintenance - Vertebral artery dissection - Neck pain - Pseudophakia - Fracture of occipital condyle - CREATED BY INTERFACE
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Major depressive disorder, single episode, in full remission - Fracture of cervical spine without spinal cord lesion, sequela - Hypertension, unspecified type - Bilateral impacted cerumen - Anxiety - Seizure disorder - Hypothyroidism, unspecified type
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-LISINOPRIL 2.5 MG TABLET
+-GLIMEPIRIDE 4 MG TABLET
+-VENLAFAXINE ER 150 MG CAPSULE,EXTENDED RELEASE 24 HR
+-AMITRIPTYLINE 50 MG TABLET
+-DIVALPROEX ER 250 MG TABLET,EXTENDED RELEASE 24 HR
+-LORAZEPAM 1 MG TABLET
+-PEN NEEDLE, DIABETIC 32 GAUGE X 5/32""
+-LOVASTATIN 20 MG TABLET
+-METFORMIN 1,000 MG TABLET
+-EMPAGLIFLOZIN 25 MG TABLET
+
+Recently Ended Within 30-Days of Message: 
+ -RELION PEN NEEDLES 32 GAUGE X 5/32""","where does the pressure/pain feel the strongest?
+Has your symptom spread beyond your pelvis?
+Does it happen when you eat?
+Any changes in your bowel movements?
+Any changes to urinary frequency?
+Any urinary pain?
+Any reddness in the area?
+Have you tried to treat your symptoms with any medications?
+Any recent changes in your medications?"
+21,2026-09-25 17:36:55.971996,response,symptoms,156,3,0,,False,"Hi Dr.,
+
+I'm getting a bit worried about some bleeding I've been experiencing over the past few days. It started with some light spotting, but today it's been a lot heavier. I'm not sure what's going on or if it's something I should be concerned about. I've had some cramping too, but it's not too bad.
+
+I was wondering if I could get your advice on what might be causing this and if I need to come in to see you. I've been feeling okay otherwise, just a bit anxious about the bleeding.
+
+Let me know what you think, thanks!
+Sarah","###Demographics###
+Age: Between 40 - 45    
+Gender: Female
+    
+###Full Active Problem List###:
+Psoriatic arthropathy - Left nephrolithiasis - Sclerosis of sacroiliac joint - Hypermobility syndrome - Exercise-induced asthma - Epidermal inclusion cyst - Dermatofibroma - Adjustment reaction with physical symptoms - Chronic colitis - Headache - Hyperkeratosis - Chronic pain - Myopia - Closed displaced fracture of distal phalanx of left thumb - Long-term current use of benzodiazepine - Injury due to off road snowmobile accident - GERD (gastroesophageal reflux disease) - Non-radiographic axial spondyloarthritis - Endometriosis - Nondisplaced fracture of distal end of left radius - Anxiety disorder - Arthralgia of multiple joints - Migraine headache - Degenerative skin disorder - Adjustment insomnia
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Bacterial vaginosis - Acute pulmonary embolism without acute cor pulmonale, unspecified pulmonary embolism type - Grief - Breakthrough bleeding with IUD - Menses painful - Menorrhagia with irregular cycle - Acute stress reaction - Anxiety - Vaginal itching
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-OMEPRAZOLE 40 MG CAPSULE,DELAYED RELEASE
+-ALBUTEROL SULFATE HFA 90 MCG/ACTUATION AEROSOL INHALER
+-LEVONORGESTREL 20.4 MCG/24 HRS (8 YRS) 52 MG INTRAUTERINE DEVICE
+-TIZANIDINE 4 MG TABLET
+-CLONAZEPAM 2 MG TABLET
+-METRONIDAZOLE 0.75 % (37)5 MG/5 GRAM) VAGINAL GEL
+-EPINEPHRINE 0.3 MG/0.3 ML INJECTION, AUTO-INJECTOR
+-APIXABAN 5 MG TABLET
+-RIZATRIPTAN 5 MG DISINTEGRATING TABLET
+-TRAZODONE 100 MG TABLET",
+22,2026-09-25 17:41:27.718339,response,symptoms,33,3,0,openai/gpt-4o,False,"Hey Doc, 
+
+I've been having this weird pelvic pressure/pain thing going on and I don't know what's causing it. It comes and goes, but when it hits, it's pretty intense. I've had it a few times over the past month or so, and I'm getting a bit worried. Sometimes it's just a dull ache, other times it's a sharp pain. I've tried to pay attention to when it happens, but it seems totally random - doesn't matter if I'm sitting, standing, or even sleeping. 
+
+I'm getting a bit concerned, so I thought I'd reach out to you. Should I come in and get checked out? I'd feel better if we could figure out what's going on.
+
+Thanks,
+Mike","###Demographics###
+Age: Between 50 - 55    
+Gender: Male
+    
+###Full Active Problem List###:
+Diabetes mellitus type 2, insulin dependent - Fracture of cervical spine without lesion of spinal cord - Closed fracture of thoracic vertebra - S/P vasectomy - ED (erectile dysfunction) - Mild non proliferative diabetic retinopathy - Insulin dependent type 2 diabetes mellitus - Branch retinal vein occlusion of left eye - GERD (gastroesophageal reflux disease) - OSA (obstructive sleep apnea) - Combined forms of age-related cataract of both eyes - Posttraumatic stress disorder - Major depressive disorder, recurrent episode, in full remission - Asthma - Presbyopia - Acute canaliculitis - Health care maintenance - Vertebral artery dissection - Neck pain - Pseudophakia - Fracture of occipital condyle - CREATED BY INTERFACE
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Major depressive disorder, single episode, in full remission - Fracture of cervical spine without spinal cord lesion, sequela - Hypertension, unspecified type - Bilateral impacted cerumen - Anxiety - Seizure disorder - Hypothyroidism, unspecified type
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-LISINOPRIL 2.5 MG TABLET
+-GLIMEPIRIDE 4 MG TABLET
+-VENLAFAXINE ER 150 MG CAPSULE,EXTENDED RELEASE 24 HR
+-AMITRIPTYLINE 50 MG TABLET
+-DIVALPROEX ER 250 MG TABLET,EXTENDED RELEASE 24 HR
+-LORAZEPAM 1 MG TABLET
+-PEN NEEDLE, DIABETIC 32 GAUGE X 5/32""
+-LOVASTATIN 20 MG TABLET
+-METFORMIN 1,000 MG TABLET
+-EMPAGLIFLOZIN 25 MG TABLET
+
+Recently Ended Within 30-Days of Message: 
+ -RELION PEN NEEDLES 32 GAUGE X 5/32""","I'm sorry you have been experiencing these troubling symptoms.
+Have you had any associated bowel or bladder issues? Have you tried anything that seems to help alleviate the symptoms? 
+Have you had any recent changes in medications?
+Please call the office to schedule an appointment.
+If your symptoms become acutely worse, you should be evaluated in the ER."
+23,2026-09-28 18:36:06.066657,followup,symptoms,156,3,0,openai/gpt-4o,False,"Hi Dr.,
+
+I'm getting a bit worried about some bleeding I've been experiencing over the past few days. It started with some light spotting, but today it's been a lot heavier. I'm not sure what's going on or if it's something I should be concerned about. I've had some cramping too, but it's not too bad.
+
+I was wondering if I could get your advice on what might be causing this and if I need to come in to see you. I've been feeling okay otherwise, just a bit anxious about the bleeding.
+
+Let me know what you think, thanks!
+Sarah","###Demographics###
+Age: Between 40 - 45    
+Gender: Female
+    
+###Full Active Problem List###:
+Psoriatic arthropathy - Left nephrolithiasis - Sclerosis of sacroiliac joint - Hypermobility syndrome - Exercise-induced asthma - Epidermal inclusion cyst - Dermatofibroma - Adjustment reaction with physical symptoms - Chronic colitis - Headache - Hyperkeratosis - Chronic pain - Myopia - Closed displaced fracture of distal phalanx of left thumb - Long-term current use of benzodiazepine - Injury due to off road snowmobile accident - GERD (gastroesophageal reflux disease) - Non-radiographic axial spondyloarthritis - Endometriosis - Nondisplaced fracture of distal end of left radius - Anxiety disorder - Arthralgia of multiple joints - Migraine headache - Degenerative skin disorder - Adjustment insomnia
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Bacterial vaginosis - Acute pulmonary embolism without acute cor pulmonale, unspecified pulmonary embolism type - Grief - Breakthrough bleeding with IUD - Menses painful - Menorrhagia with irregular cycle - Acute stress reaction - Anxiety - Vaginal itching
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-OMEPRAZOLE 40 MG CAPSULE,DELAYED RELEASE
+-ALBUTEROL SULFATE HFA 90 MCG/ACTUATION AEROSOL INHALER
+-LEVONORGESTREL 20.4 MCG/24 HRS (8 YRS) 52 MG INTRAUTERINE DEVICE
+-TIZANIDINE 4 MG TABLET
+-CLONAZEPAM 2 MG TABLET
+-METRONIDAZOLE 0.75 % (37)5 MG/5 GRAM) VAGINAL GEL
+-EPINEPHRINE 0.3 MG/0.3 ML INJECTION, AUTO-INJECTOR
+-APIXABAN 5 MG TABLET
+-RIZATRIPTAN 5 MG DISINTEGRATING TABLET
+-TRAZODONE 100 MG TABLET","when was your last period?
+are your periods regular?
+any chance of pregnancy?
+are you certain the bleeding is coming from your vagina?
+how much is the bleeding?
+do you need to use a liner or a pad?
+are you sexually active?
+do you still have the IUD?
+When was your IUD placed?
+If you still have your IUD, can you still feel the strings of your IUD?
+have you had any pelvic pain?
+any abdominal pain?"
+24,2026-09-28 18:40:17.400908,response,other,,3,0,openai/gpt-4o,False,I am very happy,,
+25,2026-09-28 18:44:49.003761,followup,symptoms,33,3,0,,False,"Hey Doc, 
+
+I've been having this weird pelvic pressure/pain thing going on and I don't know what's causing it. It comes and goes, but when it hits, it's pretty intense. I've had it a few times over the past month or so, and I'm getting a bit worried. Sometimes it's just a dull ache, other times it's a sharp pain. I've tried to pay attention to when it happens, but it seems totally random - doesn't matter if I'm sitting, standing, or even sleeping. 
+
+I'm getting a bit concerned, so I thought I'd reach out to you. Should I come in and get checked out? I'd feel better if we could figure out what's going on.
+
+Thanks,
+Mike","###Demographics###
+Age: Between 50 - 55    
+Gender: Male
+    
+###Full Active Problem List###:
+Diabetes mellitus type 2, insulin dependent - Fracture of cervical spine without lesion of spinal cord - Closed fracture of thoracic vertebra - S/P vasectomy - ED (erectile dysfunction) - Mild non proliferative diabetic retinopathy - Insulin dependent type 2 diabetes mellitus - Branch retinal vein occlusion of left eye - GERD (gastroesophageal reflux disease) - OSA (obstructive sleep apnea) - Combined forms of age-related cataract of both eyes - Posttraumatic stress disorder - Major depressive disorder, recurrent episode, in full remission - Asthma - Presbyopia - Acute canaliculitis - Health care maintenance - Vertebral artery dissection - Neck pain - Pseudophakia - Fracture of occipital condyle - CREATED BY INTERFACE
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Major depressive disorder, single episode, in full remission - Fracture of cervical spine without spinal cord lesion, sequela - Hypertension, unspecified type - Bilateral impacted cerumen - Anxiety - Seizure disorder - Hypothyroidism, unspecified type
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-LISINOPRIL 2.5 MG TABLET
+-GLIMEPIRIDE 4 MG TABLET
+-VENLAFAXINE ER 150 MG CAPSULE,EXTENDED RELEASE 24 HR
+-AMITRIPTYLINE 50 MG TABLET
+-DIVALPROEX ER 250 MG TABLET,EXTENDED RELEASE 24 HR
+-LORAZEPAM 1 MG TABLET
+-PEN NEEDLE, DIABETIC 32 GAUGE X 5/32""
+-LOVASTATIN 20 MG TABLET
+-METFORMIN 1,000 MG TABLET
+-EMPAGLIFLOZIN 25 MG TABLET
+
+Recently Ended Within 30-Days of Message: 
+ -RELION PEN NEEDLES 32 GAUGE X 5/32""","where does the pressure/pain feel the strongest?
+Has your symptom spread beyond your pelvis?
+Does it happen when you eat?
+Any changes in your bowel movements?
+Any changes to urinary frequency?
+Any urinary pain?
+Any reddness in the area?
+Have you tried to treat your symptoms with any medications?
+Any recent changes in your medications?"
+26,2026-09-28 18:47:21.913023,followup,symptoms,33,3,0,,False,"Hey Doc, 
+
+I've been having this weird pelvic pressure/pain thing going on and I don't know what's causing it. It comes and goes, but when it hits, it's pretty intense. I've had it a few times over the past month or so, and I'm getting a bit worried. Sometimes it's just a dull ache, other times it's a sharp pain. I've tried to pay attention to when it happens, but it seems totally random - doesn't matter if I'm sitting, standing, or even sleeping. 
+
+I'm getting a bit concerned, so I thought I'd reach out to you. Should I come in and get checked out? I'd feel better if we could figure out what's going on.
+
+Thanks,
+Mike","###Demographics###
+Age: Between 50 - 55    
+Gender: Male
+    
+###Full Active Problem List###:
+Diabetes mellitus type 2, insulin dependent - Fracture of cervical spine without lesion of spinal cord - Closed fracture of thoracic vertebra - S/P vasectomy - ED (erectile dysfunction) - Mild non proliferative diabetic retinopathy - Insulin dependent type 2 diabetes mellitus - Branch retinal vein occlusion of left eye - GERD (gastroesophageal reflux disease) - OSA (obstructive sleep apnea) - Combined forms of age-related cataract of both eyes - Posttraumatic stress disorder - Major depressive disorder, recurrent episode, in full remission - Asthma - Presbyopia - Acute canaliculitis - Health care maintenance - Vertebral artery dissection - Neck pain - Pseudophakia - Fracture of occipital condyle - CREATED BY INTERFACE
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Major depressive disorder, single episode, in full remission - Fracture of cervical spine without spinal cord lesion, sequela - Hypertension, unspecified type - Bilateral impacted cerumen - Anxiety - Seizure disorder - Hypothyroidism, unspecified type
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-LISINOPRIL 2.5 MG TABLET
+-GLIMEPIRIDE 4 MG TABLET
+-VENLAFAXINE ER 150 MG CAPSULE,EXTENDED RELEASE 24 HR
+-AMITRIPTYLINE 50 MG TABLET
+-DIVALPROEX ER 250 MG TABLET,EXTENDED RELEASE 24 HR
+-LORAZEPAM 1 MG TABLET
+-PEN NEEDLE, DIABETIC 32 GAUGE X 5/32""
+-LOVASTATIN 20 MG TABLET
+-METFORMIN 1,000 MG TABLET
+-EMPAGLIFLOZIN 25 MG TABLET
+
+Recently Ended Within 30-Days of Message: 
+ -RELION PEN NEEDLES 32 GAUGE X 5/32""","where does the pressure/pain feel the strongest?
+Has your symptom spread beyond your pelvis?
+Does it happen when you eat?
+Any changes in your bowel movements?
+Any changes to urinary frequency?
+Any urinary pain?
+Any reddness in the area?
+Have you tried to treat your symptoms with any medications?
+Any recent changes in your medications?"
+27,2026-09-29 12:29:12.919343,followup,symptoms,33,3,0,,False,"Hey Doc, 
+
+I've been having this weird pelvic pressure/pain thing going on and I don't know what's causing it. It comes and goes, but when it hits, it's pretty intense. I've had it a few times over the past month or so, and I'm getting a bit worried. Sometimes it's just a dull ache, other times it's a sharp pain. I've tried to pay attention to when it happens, but it seems totally random - doesn't matter if I'm sitting, standing, or even sleeping. 
+
+I'm getting a bit concerned, so I thought I'd reach out to you. Should I come in and get checked out? I'd feel better if we could figure out what's going on.
+
+Thanks,
+Mike","###Demographics###
+Age: Between 50 - 55    
+Gender: Male
+    
+###Full Active Problem List###:
+Diabetes mellitus type 2, insulin dependent - Fracture of cervical spine without lesion of spinal cord - Closed fracture of thoracic vertebra - S/P vasectomy - ED (erectile dysfunction) - Mild non proliferative diabetic retinopathy - Insulin dependent type 2 diabetes mellitus - Branch retinal vein occlusion of left eye - GERD (gastroesophageal reflux disease) - OSA (obstructive sleep apnea) - Combined forms of age-related cataract of both eyes - Posttraumatic stress disorder - Major depressive disorder, recurrent episode, in full remission - Asthma - Presbyopia - Acute canaliculitis - Health care maintenance - Vertebral artery dissection - Neck pain - Pseudophakia - Fracture of occipital condyle - CREATED BY INTERFACE
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Major depressive disorder, single episode, in full remission - Fracture of cervical spine without spinal cord lesion, sequela - Hypertension, unspecified type - Bilateral impacted cerumen - Anxiety - Seizure disorder - Hypothyroidism, unspecified type
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-LISINOPRIL 2.5 MG TABLET
+-GLIMEPIRIDE 4 MG TABLET
+-VENLAFAXINE ER 150 MG CAPSULE,EXTENDED RELEASE 24 HR
+-AMITRIPTYLINE 50 MG TABLET
+-DIVALPROEX ER 250 MG TABLET,EXTENDED RELEASE 24 HR
+-LORAZEPAM 1 MG TABLET
+-PEN NEEDLE, DIABETIC 32 GAUGE X 5/32""
+-LOVASTATIN 20 MG TABLET
+-METFORMIN 1,000 MG TABLET
+-EMPAGLIFLOZIN 25 MG TABLET
+
+Recently Ended Within 30-Days of Message: 
+ -RELION PEN NEEDLES 32 GAUGE X 5/32""","where does the pressure/pain feel the strongest?
+Has your symptom spread beyond your pelvis?
+Does it happen when you eat?
+Any changes in your bowel movements?
+Any changes to urinary frequency?
+Any urinary pain?
+Any reddness in the area?
+Have you tried to treat your symptoms with any medications?
+Any recent changes in your medications?"
+28,2026-09-29 12:30:57.675505,response,other,,3,0,openai/gpt-4o,False,"Hi, im feeling bad",,
+29,2026-09-29 12:31:55.130865,response,other,,3,0,openai/gpt-4o,False,"Hi, im feeling bad",,
+30,2026-09-29 12:36:19.498231,response,symptoms,33,2,0,,False,"Hey Doc, 
+
+I've been having this weird pelvic pressure/pain thing going on and I don't know what's causing it. It comes and goes, but when it hits, it's pretty intense. I've had it a few times over the past month or so, and I'm getting a bit worried. Sometimes it's just a dull ache, other times it's a sharp pain. I've tried to pay attention to when it happens, but it seems totally random - doesn't matter if I'm sitting, standing, or even sleeping. 
+
+I'm getting a bit concerned, so I thought I'd reach out to you. Should I come in and get checked out? I'd feel better if we could figure out what's going on.
+
+Thanks,
+Mike","###Demographics###
+Age: Between 50 - 55    
+Gender: Male
+    
+###Full Active Problem List###:
+Diabetes mellitus type 2, insulin dependent - Fracture of cervical spine without lesion of spinal cord - Closed fracture of thoracic vertebra - S/P vasectomy - ED (erectile dysfunction) - Mild non proliferative diabetic retinopathy - Insulin dependent type 2 diabetes mellitus - Branch retinal vein occlusion of left eye - GERD (gastroesophageal reflux disease) - OSA (obstructive sleep apnea) - Combined forms of age-related cataract of both eyes - Posttraumatic stress disorder - Major depressive disorder, recurrent episode, in full remission - Asthma - Presbyopia - Acute canaliculitis - Health care maintenance - Vertebral artery dissection - Neck pain - Pseudophakia - Fracture of occipital condyle - CREATED BY INTERFACE
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Major depressive disorder, single episode, in full remission - Fracture of cervical spine without spinal cord lesion, sequela - Hypertension, unspecified type - Bilateral impacted cerumen - Anxiety - Seizure disorder - Hypothyroidism, unspecified type
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-LISINOPRIL 2.5 MG TABLET
+-GLIMEPIRIDE 4 MG TABLET
+-VENLAFAXINE ER 150 MG CAPSULE,EXTENDED RELEASE 24 HR
+-AMITRIPTYLINE 50 MG TABLET
+-DIVALPROEX ER 250 MG TABLET,EXTENDED RELEASE 24 HR
+-LORAZEPAM 1 MG TABLET
+-PEN NEEDLE, DIABETIC 32 GAUGE X 5/32""
+-LOVASTATIN 20 MG TABLET
+-METFORMIN 1,000 MG TABLET
+-EMPAGLIFLOZIN 25 MG TABLET
+
+Recently Ended Within 30-Days of Message: 
+ -RELION PEN NEEDLES 32 GAUGE X 5/32""","I'm sorry you have been experiencing these troubling symptoms.
+Have you had any associated bowel or bladder issues? Have you tried anything that seems to help alleviate the symptoms? 
+Have you had any recent changes in medications?
+Please call the office to schedule an appointment.
+If your symptoms become acutely worse, you should be evaluated in the ER."
+31,2026-09-30 15:43:27.321483,followup,medication,34,3,0,openai/gpt-4o,False,"Hi Doctor,
+
+I'm reaching out because I've been having this productive cough that keeps coming and going. It's not consistent, but when it hits, it's pretty intense and I'm bringing up a lot of mucus. I've tried to manage it on my own, but I'm getting a bit concerned because it's been happening randomly over the past few weeks.
+
+I'm a bit worried that it could be something serious, especially at my age. I've been doing some reading and I'm wondering if it could be related to my heart or something else entirely. I've been taking my medications as prescribed and I haven't noticed any other symptoms, but I thought it was best to touch base with you ASAP.
+
+Could we schedule an appointment to take a look at this? I'd feel much better if we could get to the bottom of it.
+
+Thanks,
+Margaret","###Demographics###
+Age: Between 70 - 75    
+Gender: Female
+    
+###Full Active Problem List###:
+Hypertension - Rheumatoid arthritis involving multiple sites - Osteopenia of thigh - Amnestic MCI (mild cognitive impairment with memory loss) - Splenic cyst - Chronic superficial venous thrombosis of lower extremity - Attention and concentration deficit - Gastroesophageal reflux - RLS (restless legs syndrome) - Muscle spasm - Constipation - FH: multiple sclerosis - OSA (obstructive sleep apnea) - BPPV (benign paroxysmal positional vertigo) - Abnormality of aortic arch - Other forms of systemic lupus erythematosus - Osteopenia of multiple sites - Stage 3b chronic kidney disease - Skin rash - Carpal tunnel syndrome on right - Hypothyroidism - Hyperlipidemia - Osteoarthritis of right knee - Bruising - Insomnia - Raynaud's disease - Peripheral sensory neuropathy - Sjogren's syndrome - Pulmonary hypertension
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Chronic abdominal pain - Constipation, unspecified constipation type - Chronic kidney disease, unspecified CKD stage - Recurrent deep vein thrombosis (DVT) - Chronic superficial venous thrombosis of lower extremity, unspecified laterality - Splenic mass - Rheumatoid arthritis involving multiple sites with positive rheumatoid factor - Long term current use of anticoagulant therapy - MGUS (monoclonal gammopathy of unknown significance)
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-ROPINIROLE 0.5 MG TABLET
+-WARFARIN 2 MG TABLET
+-LEVOTHYROXINE 50 MCG TABLET
+-PREDNISONE 5 MG TABLET
+-PREDNISONE 1 MG TABLET
+-ROSUVASTATIN 5 MG TABLET
+-GABAPENTIN 100 MG CAPSULE
+-LISINOPRIL 10 MG TABLET
+-HYDROXYCHLOROQUINE 200 MG TABLET
+-VENLAFAXINE ER 75 MG CAPSULE,EXTENDED RELEASE 24 HR
+
+Recently Ended Within 30-Days of Message: 
+ -LISINOPRIL 40 MG TABLET","when did your symptoms first start?
+Have you had any fever?
+Have you had any chills?
+Any body aches?
+Have you been in contact with anyone who is sick?
+Is your GERD worse after eating?
+Any coughing while you're eating?
+Are you coughing up any food?
+I see you recently ended lisinopril, did you run out or were you advised to stop taking it?
+Have you treated your symptoms with any medications?
+Can you clarify if you have any history of tobacco use?
+Have you experienced any weight loss?"
+32,2026-09-30 15:44:13.928268,response,medication,37,3,0,openai/gpt-4o,False,"Hi Dr.,
+
+I just stopped taking my birth control pills and I've already noticed some changes with my period. I'm not sure what to expect, but I thought I'd check in with you. Should I be worried about anything?
+
+Thanks,
+Sarah","###Demographics###
+Age: Between 50 - 55    
+Gender: Female
+    
+###Full Active Problem List###:
+SOB (shortness of breath) - Palpitations - Hypertrophic non-obstructive cardiomyopathy
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Elevated liver enzymes - Elevated ALT measurement - Fatty liver - NASH (nonalcoholic steatohepatitis) - Essential hypertension - Type 2 diabetes mellitus with hyperglycemia, without long-term current use of insulin - Type 2 diabetes mellitus without complication, without long-term current use of insulin - Elevated LFTs - Astigmatism of both eyes with presbyopia
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-BLOOD-GLUCOSE METER
+-LANCETS
+-LOSARTAN 25 MG TABLET
+-METOPROLOL SUCCINATE ER 25 MG TABLET,EXTENDED RELEASE 24 HR
+-BLOOD SUGAR DIAGNOSTIC STRIPS
+
+Recently Ended Within 30-Days of Message: 
+ -METFORMIN ER 500 MG TABLET,EXTENDED RELEASE 24 HR","Thank you for checking in.
+What kind of changes have you noticed? How long has it been since you stopped taking your oral contraceptives?  Have you had any heavy bleeding or spotting between periods?"
+33,2026-09-30 16:36:29.622663,followup,medication,34,3,0,,False,"Hi Doctor,
+
+I'm reaching out because I've been having this productive cough that keeps coming and going. It's not consistent, but when it hits, it's pretty intense and I'm bringing up a lot of mucus. I've tried to manage it on my own, but I'm getting a bit concerned because it's been happening randomly over the past few weeks.
+
+I'm a bit worried that it could be something serious, especially at my age. I've been doing some reading and I'm wondering if it could be related to my heart or something else entirely. I've been taking my medications as prescribed and I haven't noticed any other symptoms, but I thought it was best to touch base with you ASAP.
+
+Could we schedule an appointment to take a look at this? I'd feel much better if we could get to the bottom of it.
+
+Thanks,
+Margaret","###Demographics###
+Age: Between 70 - 75    
+Gender: Female
+    
+###Full Active Problem List###:
+Hypertension - Rheumatoid arthritis involving multiple sites - Osteopenia of thigh - Amnestic MCI (mild cognitive impairment with memory loss) - Splenic cyst - Chronic superficial venous thrombosis of lower extremity - Attention and concentration deficit - Gastroesophageal reflux - RLS (restless legs syndrome) - Muscle spasm - Constipation - FH: multiple sclerosis - OSA (obstructive sleep apnea) - BPPV (benign paroxysmal positional vertigo) - Abnormality of aortic arch - Other forms of systemic lupus erythematosus - Osteopenia of multiple sites - Stage 3b chronic kidney disease - Skin rash - Carpal tunnel syndrome on right - Hypothyroidism - Hyperlipidemia - Osteoarthritis of right knee - Bruising - Insomnia - Raynaud's disease - Peripheral sensory neuropathy - Sjogren's syndrome - Pulmonary hypertension
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Chronic abdominal pain - Constipation, unspecified constipation type - Chronic kidney disease, unspecified CKD stage - Recurrent deep vein thrombosis (DVT) - Chronic superficial venous thrombosis of lower extremity, unspecified laterality - Splenic mass - Rheumatoid arthritis involving multiple sites with positive rheumatoid factor - Long term current use of anticoagulant therapy - MGUS (monoclonal gammopathy of unknown significance)
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-ROPINIROLE 0.5 MG TABLET
+-WARFARIN 2 MG TABLET
+-LEVOTHYROXINE 50 MCG TABLET
+-PREDNISONE 5 MG TABLET
+-PREDNISONE 1 MG TABLET
+-ROSUVASTATIN 5 MG TABLET
+-GABAPENTIN 100 MG CAPSULE
+-LISINOPRIL 10 MG TABLET
+-HYDROXYCHLOROQUINE 200 MG TABLET
+-VENLAFAXINE ER 75 MG CAPSULE,EXTENDED RELEASE 24 HR
+
+Recently Ended Within 30-Days of Message: 
+ -LISINOPRIL 40 MG TABLET","when did your symptoms first start?
+Have you had any fever?
+Have you had any chills?
+Any body aches?
+Have you been in contact with anyone who is sick?
+Is your GERD worse after eating?
+Any coughing while you're eating?
+Are you coughing up any food?
+I see you recently ended lisinopril, did you run out or were you advised to stop taking it?
+Have you treated your symptoms with any medications?
+Can you clarify if you have any history of tobacco use?
+Have you experienced any weight loss?"
+34,2026-10-14 16:51:51.179490,followup,medication,34,3,1,,False,"Hi Doctor,
+
+I'm reaching out because I've been having this productive cough that keeps coming and going. It's not consistent, but when it hits, it's pretty intense and I'm bringing up a lot of mucus. I've tried to manage it on my own, but I'm getting a bit concerned because it's been happening randomly over the past few weeks.
+
+I'm a bit worried that it could be something serious, especially at my age. I've been doing some reading and I'm wondering if it could be related to my heart or something else entirely. I've been taking my medications as prescribed and I haven't noticed any other symptoms, but I thought it was best to touch base with you ASAP.
+
+Could we schedule an appointment to take a look at this? I'd feel much better if we could get to the bottom of it.
+
+Thanks,
+Margaret","###Demographics###
+Age: Between 70 - 75    
+Gender: Female
+    
+###Full Active Problem List###:
+Hypertension - Rheumatoid arthritis involving multiple sites - Osteopenia of thigh - Amnestic MCI (mild cognitive impairment with memory loss) - Splenic cyst - Chronic superficial venous thrombosis of lower extremity - Attention and concentration deficit - Gastroesophageal reflux - RLS (restless legs syndrome) - Muscle spasm - Constipation - FH: multiple sclerosis - OSA (obstructive sleep apnea) - BPPV (benign paroxysmal positional vertigo) - Abnormality of aortic arch - Other forms of systemic lupus erythematosus - Osteopenia of multiple sites - Stage 3b chronic kidney disease - Skin rash - Carpal tunnel syndrome on right - Hypothyroidism - Hyperlipidemia - Osteoarthritis of right knee - Bruising - Insomnia - Raynaud's disease - Peripheral sensory neuropathy - Sjogren's syndrome - Pulmonary hypertension
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Chronic abdominal pain - Constipation, unspecified constipation type - Chronic kidney disease, unspecified CKD stage - Recurrent deep vein thrombosis (DVT) - Chronic superficial venous thrombosis of lower extremity, unspecified laterality - Splenic mass - Rheumatoid arthritis involving multiple sites with positive rheumatoid factor - Long term current use of anticoagulant therapy - MGUS (monoclonal gammopathy of unknown significance)
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-ROPINIROLE 0.5 MG TABLET
+-WARFARIN 2 MG TABLET
+-LEVOTHYROXINE 50 MCG TABLET
+-PREDNISONE 5 MG TABLET
+-PREDNISONE 1 MG TABLET
+-ROSUVASTATIN 5 MG TABLET
+-GABAPENTIN 100 MG CAPSULE
+-LISINOPRIL 10 MG TABLET
+-HYDROXYCHLOROQUINE 200 MG TABLET
+-VENLAFAXINE ER 75 MG CAPSULE,EXTENDED RELEASE 24 HR
+
+Recently Ended Within 30-Days of Message: 
+ -LISINOPRIL 40 MG TABLET","when did your symptoms first start?
+Have you had any fever?
+Have you had any chills?
+Any body aches?
+Have you been in contact with anyone who is sick?
+Is your GERD worse after eating?
+Any coughing while you're eating?
+Are you coughing up any food?
+I see you recently ended lisinopril, did you run out or were you advised to stop taking it?
+Have you treated your symptoms with any medications?
+Can you clarify if you have any history of tobacco use?
+Have you experienced any weight loss?"
+35,2026-10-15 19:59:57.464849,followup,medication,34,3,0,openai/gpt-4o,False,"Hi Doctor,
+
+I'm reaching out because I've been having this productive cough that keeps coming and going. It's not consistent, but when it hits, it's pretty intense and I'm bringing up a lot of mucus. I've tried to manage it on my own, but I'm getting a bit concerned because it's been happening randomly over the past few weeks.
+
+I'm a bit worried that it could be something serious, especially at my age. I've been doing some reading and I'm wondering if it could be related to my heart or something else entirely. I've been taking my medications as prescribed and I haven't noticed any other symptoms, but I thought it was best to touch base with you ASAP.
+
+Could we schedule an appointment to take a look at this? I'd feel much better if we could get to the bottom of it.
+
+Thanks,
+Margaret","###Demographics###
+Age: Between 70 - 75    
+Gender: Female
+    
+###Full Active Problem List###:
+Hypertension - Rheumatoid arthritis involving multiple sites - Osteopenia of thigh - Amnestic MCI (mild cognitive impairment with memory loss) - Splenic cyst - Chronic superficial venous thrombosis of lower extremity - Attention and concentration deficit - Gastroesophageal reflux - RLS (restless legs syndrome) - Muscle spasm - Constipation - FH: multiple sclerosis - OSA (obstructive sleep apnea) - BPPV (benign paroxysmal positional vertigo) - Abnormality of aortic arch - Other forms of systemic lupus erythematosus - Osteopenia of multiple sites - Stage 3b chronic kidney disease - Skin rash - Carpal tunnel syndrome on right - Hypothyroidism - Hyperlipidemia - Osteoarthritis of right knee - Bruising - Insomnia - Raynaud's disease - Peripheral sensory neuropathy - Sjogren's syndrome - Pulmonary hypertension
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Chronic abdominal pain - Constipation, unspecified constipation type - Chronic kidney disease, unspecified CKD stage - Recurrent deep vein thrombosis (DVT) - Chronic superficial venous thrombosis of lower extremity, unspecified laterality - Splenic mass - Rheumatoid arthritis involving multiple sites with positive rheumatoid factor - Long term current use of anticoagulant therapy - MGUS (monoclonal gammopathy of unknown significance)
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-ROPINIROLE 0.5 MG TABLET
+-WARFARIN 2 MG TABLET
+-LEVOTHYROXINE 50 MCG TABLET
+-PREDNISONE 5 MG TABLET
+-PREDNISONE 1 MG TABLET
+-ROSUVASTATIN 5 MG TABLET
+-GABAPENTIN 100 MG CAPSULE
+-LISINOPRIL 10 MG TABLET
+-HYDROXYCHLOROQUINE 200 MG TABLET
+-VENLAFAXINE ER 75 MG CAPSULE,EXTENDED RELEASE 24 HR
+
+Recently Ended Within 30-Days of Message: 
+ -LISINOPRIL 40 MG TABLET","when did your symptoms first start?
+Have you had any fever?
+Have you had any chills?
+Any body aches?
+Have you been in contact with anyone who is sick?
+Is your GERD worse after eating?
+Any coughing while you're eating?
+Are you coughing up any food?
+I see you recently ended lisinopril, did you run out or were you advised to stop taking it?
+Have you treated your symptoms with any medications?
+Can you clarify if you have any history of tobacco use?
+Have you experienced any weight loss?"
+36,2026-10-15 20:02:23.766704,response,medication,34,2,0,openai/gpt-4o,False,"Hi Doctor,
+
+I'm reaching out because I've been having this productive cough that keeps coming and going. It's not consistent, but when it hits, it's pretty intense and I'm bringing up a lot of mucus. I've tried to manage it on my own, but I'm getting a bit concerned because it's been happening randomly over the past few weeks.
+
+I'm a bit worried that it could be something serious, especially at my age. I've been doing some reading and I'm wondering if it could be related to my heart or something else entirely. I've been taking my medications as prescribed and I haven't noticed any other symptoms, but I thought it was best to touch base with you ASAP.
+
+Could we schedule an appointment to take a look at this? I'd feel much better if we could get to the bottom of it.
+
+Thanks,
+Margaret","###Demographics###
+Age: Between 70 - 75    
+Gender: Female
+    
+###Full Active Problem List###:
+Hypertension - Rheumatoid arthritis involving multiple sites - Osteopenia of thigh - Amnestic MCI (mild cognitive impairment with memory loss) - Splenic cyst - Chronic superficial venous thrombosis of lower extremity - Attention and concentration deficit - Gastroesophageal reflux - RLS (restless legs syndrome) - Muscle spasm - Constipation - FH: multiple sclerosis - OSA (obstructive sleep apnea) - BPPV (benign paroxysmal positional vertigo) - Abnormality of aortic arch - Other forms of systemic lupus erythematosus - Osteopenia of multiple sites - Stage 3b chronic kidney disease - Skin rash - Carpal tunnel syndrome on right - Hypothyroidism - Hyperlipidemia - Osteoarthritis of right knee - Bruising - Insomnia - Raynaud's disease - Peripheral sensory neuropathy - Sjogren's syndrome - Pulmonary hypertension
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Chronic abdominal pain - Constipation, unspecified constipation type - Chronic kidney disease, unspecified CKD stage - Recurrent deep vein thrombosis (DVT) - Chronic superficial venous thrombosis of lower extremity, unspecified laterality - Splenic mass - Rheumatoid arthritis involving multiple sites with positive rheumatoid factor - Long term current use of anticoagulant therapy - MGUS (monoclonal gammopathy of unknown significance)
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-ROPINIROLE 0.5 MG TABLET
+-WARFARIN 2 MG TABLET
+-LEVOTHYROXINE 50 MCG TABLET
+-PREDNISONE 5 MG TABLET
+-PREDNISONE 1 MG TABLET
+-ROSUVASTATIN 5 MG TABLET
+-GABAPENTIN 100 MG CAPSULE
+-LISINOPRIL 10 MG TABLET
+-HYDROXYCHLOROQUINE 200 MG TABLET
+-VENLAFAXINE ER 75 MG CAPSULE,EXTENDED RELEASE 24 HR
+
+Recently Ended Within 30-Days of Message: 
+ -LISINOPRIL 40 MG TABLET","I'm sorry you have been experiencing these troubling symptoms.
+Have you noticed any blood in your sputum? Have you had any shortness of breath or chest pain? 
+Have you had any recent changes in your medications?
+Please call the office to schedule an appointment.
+If your symptoms become acutely worse, or if you develop any shortness of breath or chest pain, you should be evaluated emergently in the ER."
+37,2026-10-16 18:29:33.277701,followup,medication,34,3,0,,False,"Hi Doctor,
+
+I'm reaching out because I've been having this productive cough that keeps coming and going. It's not consistent, but when it hits, it's pretty intense and I'm bringing up a lot of mucus. I've tried to manage it on my own, but I'm getting a bit concerned because it's been happening randomly over the past few weeks.
+
+I'm a bit worried that it could be something serious, especially at my age. I've been doing some reading and I'm wondering if it could be related to my heart or something else entirely. I've been taking my medications as prescribed and I haven't noticed any other symptoms, but I thought it was best to touch base with you ASAP.
+
+Could we schedule an appointment to take a look at this? I'd feel much better if we could get to the bottom of it.
+
+Thanks,
+Margaret","###Demographics###
+Age: Between 70 - 75    
+Gender: Female
+    
+###Full Active Problem List###:
+Hypertension - Rheumatoid arthritis involving multiple sites - Osteopenia of thigh - Amnestic MCI (mild cognitive impairment with memory loss) - Splenic cyst - Chronic superficial venous thrombosis of lower extremity - Attention and concentration deficit - Gastroesophageal reflux - RLS (restless legs syndrome) - Muscle spasm - Constipation - FH: multiple sclerosis - OSA (obstructive sleep apnea) - BPPV (benign paroxysmal positional vertigo) - Abnormality of aortic arch - Other forms of systemic lupus erythematosus - Osteopenia of multiple sites - Stage 3b chronic kidney disease - Skin rash - Carpal tunnel syndrome on right - Hypothyroidism - Hyperlipidemia - Osteoarthritis of right knee - Bruising - Insomnia - Raynaud's disease - Peripheral sensory neuropathy - Sjogren's syndrome - Pulmonary hypertension
+
+###Recent Encounters (Max 10)###
+
+Diagnoses (Past Year): Chronic abdominal pain - Constipation, unspecified constipation type - Chronic kidney disease, unspecified CKD stage - Recurrent deep vein thrombosis (DVT) - Chronic superficial venous thrombosis of lower extremity, unspecified laterality - Splenic mass - Rheumatoid arthritis involving multiple sites with positive rheumatoid factor - Long term current use of anticoagulant therapy - MGUS (monoclonal gammopathy of unknown significance)
+Diagnoses (Older): 
+
+###Medications (Outpatient)###
+
+Active (Start Date Before Message, Not Yet Ended):
+    
+-ROPINIROLE 0.5 MG TABLET
+-WARFARIN 2 MG TABLET
+-LEVOTHYROXINE 50 MCG TABLET
+-PREDNISONE 5 MG TABLET
+-PREDNISONE 1 MG TABLET
+-ROSUVASTATIN 5 MG TABLET
+-GABAPENTIN 100 MG CAPSULE
+-LISINOPRIL 10 MG TABLET
+-HYDROXYCHLOROQUINE 200 MG TABLET
+-VENLAFAXINE ER 75 MG CAPSULE,EXTENDED RELEASE 24 HR
+
+Recently Ended Within 30-Days of Message: 
+ -LISINOPRIL 40 MG TABLET","when did your symptoms first start?
+Have you had any fever?
+Have you had any chills?
+Any body aches?
+Have you been in contact with anyone who is sick?
+Is your GERD worse after eating?
+Any coughing while you're eating?
+Are you coughing up any food?
+I see you recently ended lisinopril, did you run out or were you advised to stop taking it?
+Have you treated your symptoms with any medications?
+Can you clarify if you have any history of tobacco use?
+Have you experienced any weight loss?"

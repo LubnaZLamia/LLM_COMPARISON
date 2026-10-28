@@ -1,0 +1,15 @@
+﻿rating_id,run_id,output_id,task,model_name,blind_label,rater,fluency,coherence,relevance,factuality,completeness,safety,comment,created_at
+12,22,79,response,Claude Fable 5.1,Model A,LR,3,3,3,4,4,4,,2026-10-14 14:03:03.105782
+13,22,78,response,GPT-4o,Model B,LR,3,3,3,3,4,4,,2026-10-14 14:03:03.132303
+14,22,80,response,Llama 3.1 70B,Model C,LR,2,2,2,2,2,2,,2026-10-14 14:03:03.149756
+1,26,90,followup,GPT-4o,Model A,Dr XYZ,5,4,3,4,3,4,,2026-09-29 00:46:29.885994
+2,26,92,followup,Llama 3.1 70B,Model B,Dr XYZ,2,2,2,3,3,4,,2026-09-29 00:46:29.905755
+3,26,91,followup,Claude Fable 5.1,Model C,Dr XYZ,3,2,2,3,2,1,,2026-09-29 00:46:29.918407
+4,29,100,response,Claude Fable 5.1,Model A,Dr ABC,4,4,4,4,4,4,,2026-09-29 12:34:32.900569
+5,29,101,response,Llama 3.1 70B,Model B,Dr ABC,5,5,5,5,5,5,,2026-09-29 12:34:32.909453
+6,29,99,response,GPT-4o,Model C,Dr ABC,5,5,5,5,5,5,,2026-09-29 12:34:32.917289
+7,30,103,response,Claude Fable 5.1,Model A,Dr XYZ,4,4,4,4,4,4,,2026-09-29 12:42:43.440657
+8,30,102,response,GPT-4o,Model B,Dr XYZ,3,3,3,3,3,3,,2026-09-29 12:42:43.451601
+9,33,110,followup,GPT-4o,Model A,Dr XYZ,2,2,2,3,4,4,,2026-09-30 16:40:09.909523
+10,33,112,followup,Llama 3.1 70B,Model B,Dr XYZ,4,4,4,4,4,4,,2026-09-30 16:40:09.937898
+11,33,111,followup,Claude Haiku 4.5,Model C,Dr XYZ,3,3,1,3,3,3,,2026-09-30 16:40:09.955935
