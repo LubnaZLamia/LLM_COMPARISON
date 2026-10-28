@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Annotate item #{{ output.pk }} · LLM Health Assistant{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/annotate.css' %}?v=1">
+{% with noun=is_followup|yesno:"question,point" verb=is_followup|yesno:"ask,say" %}
+<div class="page-head">
+  <div>
+    <a class="small-link" href="{% url 'annotations:home' %}{% if task %}?task={{ task }}{% endif %}">← Annotation home</a>
+    <p class="eyebrow">Peer annotation · {% if is_followup %}Follow-up questions{% else %}Reply to the patient{% endif %}</p>
+    <h1>Do A and B {{ verb }} the same things?</h1>
+    <p>Annotating as <strong>{{ annotator }}</strong> · {{ progress.mine }} of {{ progress.total }} done{% if existing %} · <span class="text-warn">you annotated this item before, saving updates it</span>{% endif %}</p>
+  </div>
+  <div class="actions">
+    <a class="btn-ghost" href="{% url 'annotations:next' %}?skip={{ output.pk }}{% if task %}&task={{ task }}{% endif %}" title="Leave this one for later"><svg class="ico"><use href="#i-refresh"></use></svg>Skip</a>
+  </div>
+</div>
+
+<div class="ann-rule">
+  <svg class="ico"><use href="#i-info"></use></svg>
+  <span>Judge <strong>meaning, not wording</strong>: different words count when they {{ verb }} the same thing.
+  You don't need medical knowledge, and you <strong>don't judge whether anything is correct or safe</strong>, only whether A and B match.</span>
+</div>
+
+<details class="card ann-context">
+  <summary>The patient's message, for context (optional)</summary>
+  <div class="patient-quote">"{{ run.message_text }}"</div>
+</details>
+
+<form method="post" id="ann-form" novalidate>
+  {% csrf_token %}
+  <input type="hidden" name="task" value="{{ task }}">
+  {{ form.seconds }}
+
+  <div class="ann-compare">
+    <section class="card ann-side">
+      <header class="ann-side-head">
+        <span class="ann-tag ann-tag-a">A</span>
+        <div><h2>The clinician's answer</h2>
+          <p class="muted">For each {{ noun }}: does B {{ verb }} it too?</p></div>
+      </header>
+      <div class="ann-key">
+        <span><b>Covered</b> B {{ verb }}s this, in any words, or inside a broader {{ noun }}.</span>
+        <span><b>Partly</b> B only touches on it, or less specifically.</span>
+        <span><b>Not covered</b> B does not {{ verb }} it.</span>
+      </div>
+      <ol class="ann-items">
+        {% for number, text, field in form.item_rows %}
+          <li class="ann-item{% if field.errors %} has-error{% endif %}">
+            <span class="ann-num">{{ number }}</span>
+            <p class="ann-item-text">{{ text }}</p>
+            <div class="ann-choice" role="radiogroup" aria-label="Item {{ number }}">
+              {% for radio in field %}
+                <label class="ann-pill ann-pill-{{ radio.data.value }}">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+              {% endfor %}
+            </div>
+            {% for e in field.errors %}<p class="text-error ann-err ann-item-err">{{ e }}</p>{% endfor %}
+          </li>
+        {% endfor %}
+      </ol>
+    </section>
+
+    <section class="card ann-side ann-side-b">
+      <header class="ann-side-head">
+        <span class="ann-tag ann-tag-b">B</span>
+        <div><h2>The AI's answer</h2>
+          <p class="muted"><svg class="ico"><use href="#i-eye-off"></use></svg> Model name hidden</p></div>
+      </header>
+      <div class="ann-b-text">
+        {% if candidate_items %}
+          <ol>{% for q in candidate_items %}<li>{{ q }}</li>{% endfor %}</ol>
+        {% else %}
+          {{ output.text|linebreaks }}
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <section class="card ann-step{% if form.similar.errors or form.coverage.errors or form.reasons.errors or form.other_reason.errors %} has-error{% endif %}">
+    <h3><span class="step-dot">2</span>Overall, are A and B similar?</h3>
+    <p class="ann-tally muted" id="ann-tally" hidden></p>
+    <div class="ann-row">
+      {% for radio in form.similar %}
+        <label class="ann-option ann-option-big">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+      {% endfor %}
+    </div>
+    {% for e in form.similar.errors %}<p class="text-error ann-err">{{ e }}</p>{% endfor %}
+
+    <div class="ann-branch" data-when="yes">
+      <p class="ann-q">How much of A does B cover?</p>
+      <div class="ann-row">
+        {% for radio in form.coverage %}
+          <label class="ann-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+        {% endfor %}
+      </div>
+      {% for e in form.coverage.errors %}<p class="text-error ann-err">{{ e }}</p>{% endfor %}
+    </div>
+
+    <div class="ann-branch" data-when="no">
+      <p class="ann-q">Why not? Pick all that apply.</p>
+      <div class="ann-reasons">
+        {% for cb in form.reasons %}
+          <label class="ann-reason">{{ cb.tag }}<span><b>{{ cb.choice_label }}</b><small>{% for key, pair in reasons.items %}{% if key == cb.data.value %}{{ pair.1 }}{% endif %}{% endfor %}</small></span></label>
+        {% endfor %}
+      </div>
+      <div class="ann-other">{{ form.other_reason }}</div>
+      {% for e in form.reasons.errors %}<p class="text-error ann-err">{{ e }}</p>{% endfor %}
+      {% for e in form.other_reason.errors %}<p class="text-error ann-err">{{ e }}</p>{% endfor %}
+    </div>
+  </section>
+
+  <section class="card ann-step{% if form.extra.errors %} has-error{% endif %}">
+    <h3><span class="step-dot">3</span>How much of B is not in A at all?</h3>
+    <p class="muted ann-sub">Extra {{ noun }}s or content in B that has no counterpart in A.</p>
+    <div class="ann-row">
+      {% for radio in form.extra %}
+        <label class="ann-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+      {% endfor %}
+    </div>
+    {% for e in form.extra.errors %}<p class="text-error ann-err">{{ e }}</p>{% endfor %}
+  </section>
+
+  <section class="card ann-step{% if form.confidence.errors %} has-error{% endif %}">
+    <h3><span class="step-dot">4</span>How sure are you about this item?</h3>
+    <div class="ann-row">
+      {% for radio in form.confidence %}
+        <label class="ann-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+      {% endfor %}
+    </div>
+    {% for e in form.confidence.errors %}<p class="text-error ann-err">{{ e }}</p>{% endfor %}
+    <label class="field ann-comment"><span>Comment (optional)</span>{{ form.comment }}</label>
+  </section>
+
+  <div class="rate-actions">
+    <span class="progress-note" id="ann-progress" data-total="{{ form.items|length }}">0 of {{ form.items|length }} items answered</span>
+    <div class="actions">
+      <button class="btn-ghost" type="submit" name="then" value="home">Save and stop</button>
+      <button class="btn-primary" type="submit"><svg class="ico"><use href="#i-check"></use></svg>Save and next</button>
+    </div>
+  </div>
+</form>
+{% endwith %}
+{% endblock %}
+
+{% block scripts %}<script src="{% static 'js/annotate.js' %}?v=1"></script>{% endblock %}

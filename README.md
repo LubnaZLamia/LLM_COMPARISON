@@ -26,6 +26,7 @@ After that, double-clicking `run.bat` starts the app straight away. Close the wi
 | `/` | **Compare**: pick a task, then a message from that task's dataset, then models, then generate |
 | `/runs/<id>/` | **Results**: highlight tiles, side-by-side or table view, metrics, CSV download |
 | `/chat/` | **Chat**: multi-turn chat with one model (you play the patient), streamed replies |
+| `/annotate/` | **Peer annotation**: non-experts judge how similar each model output is to the clinician's answer |
 | `/dataset/` | **Dataset manager**: add, edit, delete and search messages, and import/export CSV |
 | `/rate/` | **Clinician rating**: blind human scoring of past runs, and the ratings CSV |
 | `/help/` | How to use the app and how each metric works |
@@ -126,6 +127,34 @@ The **Chat** page is a normal multi-turn chat. You play the patient; the model a
 
 Edit the system prompt in `apps/chat/services/prompts.py`. Chats are local and shared by everyone using this copy of the app.
 
+## Peer annotation (similarity to the clinician)
+
+The **Annotate** page is a second human evaluation, separate from the clinician Rate page and open to people with
+no medical training. It asks only what a non-expert can check: **how similar is a model's output to the clinician's
+own answer?** It never asks about safety or clinical accuracy.
+
+Each item shows the clinician's answer (**A**) beside one model output (**B**, model name hidden). All answers are
+multiple choice:
+
+1. **Per clinician item** (each question, or each sentence of the reply): *Covered / Partly / Not covered* in B.
+   These are the same items the automatic Clinician Match uses, so the labels check that metric item by item.
+2. **Overall, are A and B similar?** *Yes*, then roughly how much of A is covered (up to 25%, 25–50%, 50–75%,
+   75–100%); or *No*, then why: different topics, misses most of A, too general, says the opposite, a different kind
+   of text, or other (with a note).
+3. **How much of B is not in A?** None, a little, some, most.
+4. **How sure are you?** Sure, fairly sure, not sure. Plus an optional comment.
+
+Items come from the comparison runs already stored: every successful output of a run that has clinician ground
+truth. Mock-mode runs are left out. The queue gives each output to `ANNOTATION_TARGET` people (default 2) before it
+opens new ones, so inter-annotator agreement fills in early; *Skip* leaves an item for later.
+
+**Results** (`/annotate/results/`) shows, per model, the share of clinician items people marked as covered next to
+both automatic scores; how well each matcher (meaning and word overlap) agrees with people, per output (Spearman,
+mean gap) and per item (agreement, Cohen's kappa); how often two people agree with each other (the ceiling for any
+metric); and the reasons given for "not similar". Two CSVs: one row per annotation, and one row per clinician item
+per annotation with the human label beside each matcher's call. Edit the questions and reasons in
+`apps/annotations/models.py`.
+
 ## Clinician rating (human evaluation)
 
 The **Rate** page collects human scores for runs you have already generated:
@@ -189,6 +218,8 @@ apps/
   ratings/               human rating: blind labels, rubric, Rate page, ratings CSV
   chat/                  multi-turn chat: Conversation/ChatMessage models, history + streaming (services/chat.py),
                          system prompt (services/prompts.py)
+  annotations/           peer annotation: PeerAnnotation model, work queue (services/queue.py),
+                         agreement with the automatic metrics (services/stats.py)
   comparisons/
     services/prompts.py  prompts for each task + judge criteria    <- edit prompts here
     services/runner.py   calls models in parallel, runs analysis + judge, saves results

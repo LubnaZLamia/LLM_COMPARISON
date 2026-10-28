@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Annotate · LLM Health Assistant{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/annotate.css' %}?v=1">
+<div class="page-head">
+  <div>
+    <p class="eyebrow">Peer annotation</p>
+    <h1>How close is the AI to the clinician?</h1>
+    <p>Compare an AI answer with what a clinician wrote for the same patient. No medical knowledge needed: you judge whether the two texts say or ask the same things, not whether either one is right.</p>
+  </div>
+  <div class="actions">
+    <a class="btn-ghost" href="{% url 'annotations:results' %}{% if task %}?task={{ task }}{% endif %}"><svg class="ico"><use href="#i-chart"></use></svg>Results</a>
+    {% if total_annotations %}<a class="btn-ghost" href="{% url 'annotations:download' %}"><svg class="ico"><use href="#i-download"></use></svg>Annotations CSV</a>{% endif %}
+  </div>
+</div>
+
+<ol class="how-steps">
+  <li><span class="step-dot">1</span><div><strong>Go through A, item by item</strong><small>Is each clinician question or point also in B, in any words?</small></div></li>
+  <li><span class="step-dot">2</span><div><strong>Say if they are similar overall</strong><small>Yes, and roughly how much. Or no, and why.</small></div></li>
+  <li><span class="step-dot">3</span><div><strong>Say how much of B is extra</strong><small>Content in B that A does not have.</small></div></li>
+  <li><span class="step-dot">4</span><div><strong>Save and go on</strong><small>The next item opens. Stop whenever you like.</small></div></li>
+</ol>
+
+<form method="post" class="card rater-bar" id="annotator">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.GET.next|default:'' }}">
+  <input type="hidden" name="task" value="{{ task }}">
+  <label class="field">
+    <span>Your name or initials</span>
+    {{ form.annotator }}
+  </label>
+  <button class="btn-primary" type="submit"><svg class="ico"><use href="#i-check"></use></svg>{% if annotator %}Change name{% else %}Continue{% endif %}</button>
+  {% if annotator %}
+    <p class="rater-now">Annotating as <strong>{{ annotator }}</strong> · {{ total_annotations }} annotation{{ total_annotations|pluralize }} from {{ annotators }} {{ annotators|pluralize:"person,people" }} so far</p>
+  {% else %}
+    <p class="rater-now">Enter a name to start. It is stored with each annotation, so agreement between people can be measured. It is not a login.</p>
+  {% endif %}
+</form>
+
+<section class="card ann-start">
+  <div class="ann-start-head">
+    <div>
+      <h2><svg class="ico"><use href="#i-clipboard"></use></svg>What to annotate</h2>
+      <p class="muted">Each item is one AI output from a past comparison run, next to the clinician's own answer. Outputs from mock-mode runs are left out.</p>
+    </div>
+    <div class="ann-filter" role="group" aria-label="Task">
+      <a class="seg{% if not task %} active{% endif %}" href="{% url 'annotations:home' %}">All tasks</a>
+      {% for t in tasks %}
+        <a class="seg{% if task == t.value %} active{% endif %}" href="?task={{ t.value }}">{% if t.value == 'followup' %}Follow-up questions{% else %}Replies{% endif %} <span class="chip">{{ t.count }}</span></a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% if progress.total %}
+    <div class="ann-progress">
+      <div class="ann-progress-text">
+        {% if annotator %}<strong>{{ progress.mine }} of {{ progress.total }}</strong> done by you{% else %}<strong>{{ progress.total }}</strong> items available{% endif %}
+        <span class="muted">· {{ progress.started }} annotated by someone · {{ progress.at_target }} by {{ progress.target }}+ people</span>
+      </div>
+      {% if annotator %}<div class="ann-bar"><span style="width: {{ progress.pct }}%"></span></div>{% endif %}
+    </div>
+    <div class="ann-start-actions">
+      {% if annotator %}
+        {% if progress.left %}
+          <a class="btn-primary btn-generate ann-go" href="{% url 'annotations:next' %}{% if task %}?task={{ task }}{% endif %}"><svg class="ico"><use href="#i-play"></use></svg>{% if progress.mine %}Continue annotating{% else %}Start annotating{% endif %}</a>
+        {% else %}
+          <p class="flash flash-success">You have done every item in this set.</p>
+        {% endif %}
+      {% else %}
+        <a class="btn-ghost" href="#annotator">Add your name above to start</a>
+      {% endif %}
+    </div>
+  {% else %}
+    <p class="empty">Nothing to annotate yet. Generate outputs on the <a href="{% url 'comparisons:compare' %}">Compare page</a> for a message from the dataset (it needs the clinician's answer), with real models rather than mock mode.</p>
+  {% endif %}
+</section>
+
+{% if mine %}
+<div class="card table-card">
+  <table class="data-table">
+    <thead><tr><th>Your recent annotations</th><th>Task</th><th>Items covered</th><th>Similar?</th><th></th></tr></thead>
+    <tbody>
+      {% for a in mine %}
+        <tr>
+          <td class="msg-cell">"{{ a.output.run.message_text|truncatechars:90 }}"<br><small class="muted">{{ a.updated_at|date:"j M, H:i" }}</small></td>
+          <td class="nowrap">{% if a.output.run.task == 'followup' %}Questions{% else %}Reply{% endif %}</td>
+          <td class="nowrap">{% with c=a.counts %}{{ c.yes }} yes · {{ c.partly }} partly · {{ c.no }} no{% endwith %}</td>
+          <td class="nowrap">{% if a.similar %}Yes, {{ a.get_coverage_display|lower }}{% elif a.similar is False %}No{% endif %}</td>
+          <td class="row-actions"><a class="small-link" href="{% url 'annotations:item' a.output_id %}"><svg class="ico"><use href="#i-pencil"></use></svg> Edit</a></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

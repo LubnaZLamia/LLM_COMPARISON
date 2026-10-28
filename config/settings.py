@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "apps.comparisons",
     "apps.ratings",
     "apps.chat",
+    "apps.annotations",
 ]
 
 MIDDLEWARE = [
@@ -119,6 +120,9 @@ MATCH_METHOD = os.getenv("MATCH_METHOD", "both").strip().lower()
 # The model that does the alignment. Blank picks a cheap active model.
 # It goes through the same endpoint and key as every other call.
 MATCH_MODEL = os.getenv("MATCH_MODEL", "").strip()
+# Peer annotation: how many people should annotate each output before the queue
+# moves on to fresh ones. Two is the minimum for measuring agreement between annotators.
+ANNOTATION_TARGET = int(os.getenv("ANNOTATION_TARGET", "2"))
 # When true, no API calls are made; each model returns a canned answer.
 # Handy for working on the UI without spending credits.
 LLM_MOCK_MODE = env_bool("LLM_MOCK_MODE", False)

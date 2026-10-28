@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static marks annotation_extras %}
+{% block title %}Annotation results · LLM Health Assistant{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/annotate.css' %}?v=1">
+<div class="page-head">
+  <div>
+    <a class="small-link" href="{% url 'annotations:home' %}{% if task %}?task={{ task }}{% endif %}">← Annotation home</a>
+    <p class="eyebrow">Peer annotation</p>
+    <h1>Results</h1>
+    <p>What people say about how close each model is to the clinician, and whether the automatic Clinician Match agrees with them.</p>
+  </div>
+  <div class="actions">
+    <div class="ann-filter" role="group" aria-label="Task">
+      <a class="seg{% if not task %} active{% endif %}" href="{% url 'annotations:results' %}">All tasks</a>
+      {% for t in tasks %}<a class="seg{% if task == t.value %} active{% endif %}" href="?task={{ t.value }}">{% if t.value == 'followup' %}Questions{% else %}Replies{% endif %}</a>{% endfor %}
+    </div>
+  </div>
+</div>
+
+{% if not data.annotations %}
+  <section class="card"><p class="empty">No annotations yet{% if task %} for this task{% endif %}. <a href="{% url 'annotations:home' %}">Start annotating</a>.</p></section>
+{% else %}
+
+<div class="ann-tiles">
+  <div class="ann-tile"><strong>{{ data.annotations }}</strong><span>annotation{{ data.annotations|pluralize }}</span></div>
+  <div class="ann-tile"><strong>{{ data.annotators }}</strong><span>{{ data.annotators|pluralize:"person,people" }}</span></div>
+  <div class="ann-tile"><strong>{{ data.outputs }}</strong><span>output{{ data.outputs|pluralize }} annotated</span></div>
+  <div class="ann-tile"><strong>{{ data.agreement.pairs }}</strong><span>pair{{ data.agreement.pairs|pluralize }} for agreement</span></div>
+  <div class="ann-tile-actions">
+    <a class="btn-ghost btn-small" href="{% url 'annotations:download' %}"><svg class="ico"><use href="#i-download"></use></svg>Annotations CSV</a>
+    <a class="btn-ghost btn-small" href="{% url 'annotations:download_items' %}"><svg class="ico"><use href="#i-download"></use></svg>Item-level CSV</a>
+  </div>
+</div>
+
+<section class="card table-card ann-section">
+  <header class="ann-section-head">
+    <h2><svg class="ico"><use href="#i-users"></use></svg>By model</h2>
+    <p class="muted"><b>Items covered</b> is the share of the clinician's items people marked as covered (partly counts half). <b>Overall</b> turns the yes/no answer into a number: no is 0, yes is the middle of the chosen band. The last two columns are the automatic scores for the same outputs.</p>
+  </header>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Model</th><th>Outputs</th><th>Annotations</th><th>Items covered</th><th>Overall</th><th>Said similar</th><th>Auto: meaning</th><th>Auto: words</th></tr></thead>
+      <tbody>
+        {% for m in data.models %}
+          <tr>
+            <td class="nowrap"><span class="mark-cell">{% model_mark m.output size="sm" %}{{ m.name }}</span></td>
+            <td>{{ m.outputs }}</td><td>{{ m.annotations }}</td>
+            <td><strong>{{ m.human|pct }}</strong></td><td>{{ m.overall|pct }}</td><td>{{ m.similar|pct }}</td>
+            <td>{{ m.meaning|pct }}</td><td>{{ m.lexical|pct }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card table-card ann-section">
+  <header class="ann-section-head">
+    <h2><svg class="ico"><use href="#i-target"></use></svg>Does the automatic Clinician Match agree with people?</h2>
+    <p class="muted">Per output: does the automatic score rise and fall with the people's <b>Items covered</b> score (Spearman, 1 = same order), and how far apart are they (gap = automatic minus human)?</p>
+  </header>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Matcher</th><th>Outputs</th><th>Spearman</th><th>Mean gap</th><th>Mean size of gap</th></tr></thead>
+      <tbody>
+        {% for r in data.output_level %}
+          <tr><td class="nowrap">{{ r.label }}</td><td>{{ r.n }}</td><td><strong>{{ r.spearman|num }}</strong></td><td>{{ r.gap|signed }}</td><td>{{ r.abs_gap|pct }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% for r in data.output_level %}{% if r.key == "meaning" and not r.n %}
+    <p class="hint ann-note">No annotated output has a meaning-based score yet. Those come from runs scored with <code>MATCH_METHOD=meaning</code> or <code>both</code>; re-score older runs with <code>python manage.py recompute_metrics --method both</code>.</p>
+  {% endif %}{% endfor %}
+  <header class="ann-section-head ann-subhead">
+    <p class="muted">Per clinician item: when a person said <b>covered</b> or <b>not covered</b>, did the matcher say the same? Kappa corrects for chance (0 = chance, 1 = perfect). Items marked <b>partly</b> are left out.</p>
+  </header>
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead><tr><th>Matcher</th><th>Items</th><th>Agreement</th><th>Kappa</th><th>People yes, matcher no</th><th>Matcher yes, people no</th><th>Partly (left out)</th></tr></thead>
+      <tbody>
+        {% for r in data.item_level %}
+          <tr><td class="nowrap">{{ r.label }}</td><td>{{ r.n }}</td><td><strong>{{ r.agreement|pct }}</strong></td><td>{{ r.kappa|num }}</td><td>{{ r.missed }}</td><td>{{ r.extra }}</td><td>{{ r.partly }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="ann-two">
+  <section class="card ann-section">
+    <h2><svg class="ico"><use href="#i-user-check"></use></svg>Do people agree with each other?</h2>
+    {% if data.agreement.pairs %}
+      <dl class="ann-dl">
+        <dt>Same label on a clinician item</dt><dd><strong>{{ data.agreement.item_agreement|pct }}</strong> · kappa {{ data.agreement.item_kappa|num }} <small class="muted">({{ data.agreement.items }} item pairs)</small></dd>
+        <dt>Same yes/no on "similar overall"</dt><dd><strong>{{ data.agreement.similar_agreement|pct }}</strong> · kappa {{ data.agreement.similar_kappa|num }}</dd>
+        <dt>Mean gap in Items covered</dt><dd>{{ data.agreement.score_gap|pct }}</dd>
+      </dl>
+      <p class="hint">This is the ceiling: a metric can't agree with people more than people agree with each other.</p>
+    {% else %}
+      <p class="muted">No output has two annotations yet. The queue sends each item to {{ target|default:"two" }} people before opening new ones, so this fills in as more people annotate.</p>
+    {% endif %}
+  </section>
+
+  <section class="card ann-section">
+    <h2><svg class="ico"><use href="#i-alert"></use></svg>Why outputs were not similar</h2>
+    <ul class="ann-reason-bars">
+      {% for r in data.reasons %}
+        <li title="{{ r.help }}"><span class="ann-reason-label">{{ r.label }}</span><span class="ann-bar"><span style="width: {{ r.pct }}%"></span></span><span class="ann-reason-n">{{ r.count }}</span></li>
+      {% endfor %}
+    </ul>
+    <p class="hint">Counted over the annotations that answered "No"; one annotation can give several reasons.</p>
+  </section>
+</div>
+{% endif %}
+{% endblock %}

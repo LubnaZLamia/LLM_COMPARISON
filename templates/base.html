@@ -31,6 +31,8 @@
         <svg class="ico"><use href="#i-database"></use></svg>Dataset</a>
       <a href="{% url 'ratings:list' %}" class="{% if '/rate/' in p %}active{% endif %}">
         <svg class="ico"><use href="#i-star"></use></svg>Rate</a>
+      <a href="{% url 'annotations:home' %}" class="{% if '/annotate/' in p %}active{% endif %}">
+        <svg class="ico"><use href="#i-clipboard"></use></svg>Annotate</a>
       <a href="{% url 'core:help' %}" class="{% if '/help/' in p %}active{% endif %}">
         <svg class="ico"><use href="#i-help"></use></svg>Help</a>
       {% endwith %}
