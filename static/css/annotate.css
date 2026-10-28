@@ -1,6 +1,4 @@
 /* Peer annotation pages. Uses the tokens and base classes from app.css. */
-.ann-rule { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; margin-bottom: 14px; border-radius: var(--radius-sm); background: var(--accent-soft); border: 1px solid var(--accent-line); color: var(--accent-dark); font-size: 13.5px; }
-.ann-rule .ico { margin-top: 2px; }
 .ann-context { padding: 0; margin-bottom: 14px; }
 .ann-context summary { padding: 11px 16px; cursor: pointer; color: var(--muted); font-size: 13.5px; }
 .ann-context summary:hover { color: var(--accent); }
