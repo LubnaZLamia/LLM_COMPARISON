@@ -1,9 +1,21 @@
-# LLM Health Assistant
+# Beyond the Reply: Evaluating LLMs for Patient Portal Communication
 
-A Django web app for comparing how different LLMs respond to patient messages.
-Pick a patient message, choose a task (follow-up questions or a general reply), select models,
-and compare their outputs side by side. The app scores the outputs automatically, with no ground-truth
-dataset needed. All models go through [OpenRouter](https://openrouter.ai), so you only need one API key.
+An interactive Django web app for comparing how large language models handle patient portal messages.
+Pick a task (follow-up questions or a reply to the patient), a patient message with its health record,
+and several models. The app sends the same prompt to every model and shows their answers side by side.
+
+Each answer is evaluated four ways:
+
+- **Reference-free metrics**: questions asked, topics covered, agreement between models, length,
+  reading grade and key safety elements.
+- **Clinician Match**: how much of a real clinician's answer the model covered, by meaning and by word overlap.
+- **LLM-as-a-judge** (optional): another model scores each answer from 1 to 5.
+- **Human evaluation**: blind clinician rating and non-expert peer annotation.
+
+Built on two public, clinician-annotated datasets: FB-Synth (FollowupBench) and SyPPM (see [Datasets](#datasets)).
+All models go through [OpenRouter](https://openrouter.ai), so you only need one API key.
+
+By Lubna Zahan Lamia, Jialin Yang and Sudarshan Regmi, Dartmouth College.
 
 ## Start the app (Windows)
 
@@ -32,15 +44,15 @@ After that, double-clicking `run.bat` starts the app straight away. Close the wi
 | `/help/` | How to use the app and how each metric works |
 | `/admin/` | Manage models and browse past runs. Log in with `admin` / `admin` and change it with `python manage.py changepassword admin` |
 
-## How models are compared (no ground truth)
+## How models are compared
 
-**Follow-up questions**: questions asked · topics covered (8 clinical areas) · agreement with other models ·
+**Follow-up questions** (no ground truth needed): questions asked · topics covered (8 clinical areas) · agreement with other models ·
 unique questions · repeated questions
 
-**General response**: word count · reading grade level · key elements (emergency guidance, pointing the patient
+**General response** (no ground truth needed): word count · reading grade level · key elements (emergency guidance, pointing the patient
 to their care team, empathy) · topics addressed
 
-**Against the clinician** (example messages only): **Clinician Match** — how much of the clinician's own answer
+**Against the clinician** (dataset and demo messages): **Clinician Match** — how much of the clinician's own answer
 the model covered. Two implementations, and the app shows both at once:
 
 | `MATCH_METHOD` | How a clinician item is matched |
@@ -85,7 +97,7 @@ The automatic metrics use word overlap and keyword lists. They're fast, free and
 
 On first run, `seed_models` looks at OpenRouter's public model list and picks the newest general model from
 OpenAI, Anthropic, Google and Meta. For Anthropic it picks the newest **Haiku** rather than the flagship, because the
-big Claude models cost roughly ten times as much per token and this app makes one call per model per run. Commands:
+big Claude models cost roughly ten times as much per token and this app makes one call per model per run.
 
 Every time `run.bat` starts, the app checks the configured ids against OpenRouter and replaces any that were retired,
 so a "No endpoints found for ..." error fixes itself on the next start. You can also run these by hand:
@@ -104,7 +116,7 @@ logos: `mark_for()` in `apps/llms/models.py` maps a provider name to a shape, th
 
 ## When a model fails
 
-Calls are retried up to 3 times with backoff on temporary failures: HTTP 429 (the provider OpenRouter routed to was
+Calls are tried up to 3 times, with backoff, on temporary failures: HTTP 429 (the provider OpenRouter routed to was
 rate limited or busy), 5xx, timeouts and empty replies. Permanent failures (bad key, no credit, retired model id) are
 not retried. If a model still fails, its card shows the reason and the **Retry failed** button on the results page
 re-runs just that model and merges the answer into the same run — useful mid-demo.
@@ -177,24 +189,37 @@ The **Rate** page collects human scores for runs you have already generated:
 Rating a run again updates that rater's scores instead of creating duplicates. Edit the rubric in
 `apps/ratings/models.py` (`DIMENSIONS`).
 
-## Ground-truth datasets
+## Datasets
 
-`data/` holds two clinician-written datasets, imported automatically on startup:
+Two public datasets of patient portal messages. Each pairs a semi-synthetic patient message with a real, de-identified
+EHR summary and a clinician-written reference. Both are released for non-commercial research use (CC-BY-NC-4.0);
+please cite the original papers.
 
-| File | Columns | Gives ground truth for |
+| Dataset | Source | Task | Rows | Columns |
+|---|---|---|---|---|
+| FB-Synth (FollowupBench) | [PortalPal-AI/Followup-Q](https://huggingface.co/datasets/PortalPal-AI/Followup-Q) on Hugging Face; Gatto et al., ACL 2025 | Follow-up questions | 250 | EHR, Message, Questions |
+| SyPPM | [PortalPal-AI collection](https://hf.co/collections/PortalPal-AI/evaluating-alignment-for-patient-message-response-drafting) on Hugging Face; Seegmiller et al., ACL 2026 | Patient reply | 100 | Patient Message, Patient EHR Summary, Clinician Response |
+
+`data/` holds the processed copies the app imports automatically on startup:
+
+| File | Made from | Gives ground truth for |
 |---|---|---|
-| `data/questions.csv` | EHR, Message, Questions | **Generate Follow-up Questions** (250 rows) |
-| `data/responses.csv` | Patient Message, Patient EHR Summary, Clinician Response | **Generate General Response** (100 rows) |
+| `data/questions.csv` | FB-Synth, converted from Parquet to CSV, questions one per line | **Generate Follow-up Questions** (250 rows) |
+| `data/responses.csv` | SyPPM, unchanged | **Generate General Response** (100 rows) |
 
-The response file is a subset of the question file: all 91 of its distinct messages already appear in the parquet, so
-they merge into one dataset entry rather than adding new patients. After deduplication the two files contribute **227
-messages — all 227 with reference questions, 91 of those also with a reference reply**. `seed_dataset` adds 8 built-in
-demo messages on top (each with both references), so a fresh install shows 235 and 99. The live counts are always on
-the Compare and Help pages; nothing reads them from this file.
+Every SyPPM message also appears in FB-Synth, so rows are matched on the message text and merge into one dataset entry
+rather than adding new patients. After merging, the two files contribute **227 messages — all 227 with reference
+questions, 91 of those also with a reference reply**. `seed_dataset` adds 8 built-in demo messages on top (each with both
+references, written by the team rather than clinicians), so a fresh install shows 235 and 99. The live counts are always
+on the Compare and Help pages; nothing reads them from this file.
+
+> **Known limitation.** Three message texts each appear 8–9 times in FB-Synth, each time with a different chart and
+> different clinician questions. Because rows are matched on the message text alone, only the first copy of each is kept,
+> which drops 23 FB-Synth rows and 9 SyPPM rows. Matching on the message *and* the EHR would keep them all.
 
 Because of that, **each task has its own dataset** and the Compare page asks for the task first: step 2 then lists only
-the messages the clinician answered for that task (227 for follow-up questions, 91 for replies), so every run can be
-scored against ground truth. Switching the task re-filters the list and moves the selection if the current message is
+the messages with a reference for that task (235 for follow-up questions, 99 for replies, including the 8 demo messages),
+so every run can be scored against a reference answer. Switching the task re-filters the list and moves the selection if the current message is
 not in the new task's dataset; `CompareForm.clean()` rejects a mismatched pair server-side as well. Messages with no
 ground truth at all never appear — write one on the *Write Your Own* tab instead, which runs every metric except the
 clinician comparison.
@@ -234,7 +259,11 @@ apps/
     services/analysis.py output-based metrics                       <- edit metrics here
     services/judge.py    LLM-as-judge scoring
     services/summary.py  builds highlight tiles, panels and table details
-    services/metrics.py  reference-based metrics (for later)
+    services/metrics.py  word-overlap matching against the clinician (the lexical baseline)
+    services/matcher.py  meaning-based clinician matching (a small LLM aligns the two texts)
+    management/commands/ check_matching, recompute_metrics, validate_metrics
+data/                    the two datasets, imported on startup
+exports/                 shared runs, outputs and ratings (CSV), imported on startup
 templates/, static/      pages, styles, small JS
 ```
 
