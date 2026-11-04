@@ -1,5 +1,5 @@
 """
-Django settings for the LLM Health Assistant project.
+Django settings for the PortalLens project.
 
 All secrets / tunables are read from a `.env` file in the project root.
 Copy `.env.example` to `.env` and fill in your OpenRouter key.
