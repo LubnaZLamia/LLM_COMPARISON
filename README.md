@@ -145,16 +145,24 @@ The **Annotate** page is a second human evaluation, separate from the clinician 
 no medical training. It asks only what a non-expert can check: **how similar is a model's output to the clinician's
 own answer?** It never asks about safety or clinical accuracy.
 
-Each item shows the clinician's answer (**A**) beside one model output (**B**, model name hidden). All answers are
+Each item shows the patient's message and chart summary (the one the models were sent, laid out by section), then
+the clinician's answer (**A**) beside one model output (**B**, model name hidden). B is split into numbered parts:
+one per question, or one per sentence of a reply, with greetings and sign-offs left unnumbered. All answers are
 multiple choice:
 
-1. **Per clinician item** (each question, or each sentence of the reply): *Covered / Partly / Not covered* in B.
-   These are the same items the automatic Clinician Match uses, so the labels check that metric item by item.
+1. **Per clinician item** (each question, or each sentence of the reply): *Covered / Partly / Not covered* in B,
+   and for Covered and Partly, which numbered parts of B say it. These are the same items the automatic Clinician
+   Match uses, so the labels check that metric item by item; the links give the other direction (how much of B the
+   clinician also said). The old "how much of B is not in A" band is now worked out from the links and kept in the
+   `extra` column.
 2. **Overall, are A and B similar?** *Yes*, then roughly how much of A is covered (up to 25%, 25–50%, 50–75%,
    75–100%); or *No*, then why: different topics, misses most of A, too general, says the opposite, a different kind
    of text, or other (with a note).
-3. **How much of B is not in A?** None, a little, some, most.
-4. **How sure are you?** Sure, fairly sure, not sure. Plus an optional comment.
+3. **How sure are you?** Sure, fairly sure, not sure. Plus an optional comment.
+
+The page can be driven from the keyboard: **C / P / N** answer the highlighted item, **J / K** move, **Ctrl+Enter**
+(⌘↵) saves and **Ctrl+Z** (⌘Z) goes back to the previous item, skipped or saved. Unsaved answers stay in the
+browser as a draft until saved, and a save with something missing scrolls to it instead of reloading the page.
 
 Items come from the comparison runs already stored: every successful output of a run that has clinician ground
 truth. Mock-mode runs are left out.
@@ -168,11 +176,13 @@ clinician-match score get the word-overlap score. It calls no model, so it costs
 The queue gives each output to `ANNOTATION_TARGET` people (default 2) before it opens new ones, so inter-annotator
 agreement fills in early; *Skip* leaves an item for later.
 
-**Results** (`/annotate/results/`) shows, per model, the share of clinician items people marked as covered next to
+**Results** (`/annotate/results/`) shows, per model, the share of clinician items people marked as covered (recall),
+the share of the model's parts linked to a clinician item (**B in A**, precision), and their F1, next to
 both automatic scores; how well each matcher (meaning and word overlap) agrees with people, per output (Spearman,
 mean gap) and per item (agreement, Cohen's kappa); how often two people agree with each other (the ceiling for any
-metric); and the reasons given for "not similar". Two CSVs: one row per annotation, and one row per clinician item
-per annotation with the human label beside each matcher's call. Edit the questions and reasons in
+metric), including on which parts of B are in A; and the reasons given for "not
+similar". Three CSVs: one row per annotation; one row per clinician item per annotation with the human label, the
+linked parts of B, and each matcher's call; and one row per part of B per annotation with the items linking to it. Edit the questions and reasons in
 `apps/annotations/models.py`.
 
 ## Clinician rating (human evaluation)

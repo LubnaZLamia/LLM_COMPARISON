@@ -68,13 +68,14 @@
     <h2><svg class="ico"><use href="#i-clipboard"></use></svg>Peer annotation</h2>
     <p>The <a href="{% url 'annotations:home' %}">Annotate</a> page lets anyone, with no medical training, say how similar a model's output is to the clinician's own answer. It measures similarity only, never safety or correctness.</p>
     <ol>
-      <li>Type your name once. Each item shows the clinician's answer (A) next to one model output (B), with the model name hidden.</li>
-      <li>For every clinician question or point in A, pick <em>Covered</em>, <em>Partly</em> or <em>Not covered</em>: does B ask or say it, in any words?</li>
+      <li>Type your name once. Each item shows the patient's message and chart summary, then the clinician's answer (A) next to one model output (B), with the model name hidden. B is split into numbered parts: one per question, or one per sentence of a reply.</li>
+      <li>For every clinician question or point in A, pick <em>Covered</em>, <em>Partly</em> or <em>Not covered</em>: does B ask or say it, in any words? For <em>Covered</em> and <em>Partly</em>, tick the numbered parts of B that say it.</li>
       <li>Say whether A and B are similar overall. <em>Yes</em> asks roughly how much of A is covered; <em>No</em> asks why (different topics, misses most of A, too general, says the opposite, a different kind of text, other).</li>
-      <li>Say how much of B has no counterpart in A, and how sure you are. Save, and the next item opens.</li>
+      <li>Say how sure you are. Save, and the next item opens.</li>
     </ol>
+    <p>Keyboard: <kbd>C</kbd> / <kbd>P</kbd> / <kbd>N</kbd> answer the highlighted item, <kbd>J</kbd> / <kbd>K</kbd> move between items, Ctrl+Enter (⌘↵ on a Mac) saves, and Ctrl+Z (⌘Z) goes back to the previous item. Unsaved answers are kept in the browser, so going back or reloading loses nothing.</p>
     <p>The queue sends each output to two people (<code>ANNOTATION_TARGET</code> in <code>.env</code>) before opening new ones, so agreement between people can be measured. Outputs from mock-mode runs are left out.</p>
-    <p>The <a href="{% url 'annotations:results' %}">Results</a> page compares the people's item labels with the automatic Clinician Match, per output (Spearman) and per clinician item (agreement and Cohen's kappa), for both the meaning and the word-overlap matcher, and shows how often people agree with each other. Both CSV downloads are ready for analysis.</p>
+    <p>The <a href="{% url 'annotations:results' %}">Results</a> page compares the people's item labels with the automatic Clinician Match, per output (Spearman) and per clinician item (agreement and Cohen's kappa), for both the meaning and the word-overlap matcher, and shows how often people agree with each other. It also shows the other direction: how much of each model's text the clinician also said. The three CSV downloads are ready for analysis.</p>
   </section>
 
   <section class="card prose" id="rating">

@@ -7,6 +7,9 @@ Three questions, all computed from the database, no API calls:
   (agreement and Cohen's kappa) for both matchers, meaning and word overlap.
 * Human vs human: on outputs two people annotated, how often they gave the same
   item label, and the same yes/no answer. This is the ceiling a metric can reach.
+
+The links from clinician items to parts of the model's text add the other direction:
+how much of each model's text the clinician also said.
 """
 from __future__ import annotations
 
@@ -71,10 +74,14 @@ def build(task: str = "") -> dict:
     for pk, anns in by_output.items():
         output = anns[0].output
         item_scores = [a.item_score for a in anns if a.item_score is not None]
+        unit_scores = [a.unit_score for a in anns if a.unit_score is not None]
+        f1s = [a.f1 for a in anns if a.f1 is not None]
         overall = [a.overall for a in anns if a.overall is not None]
         outputs[pk] = {
             "output": output,
             "human": mean(item_scores) if item_scores else None,
+            "unit": mean(unit_scores) if unit_scores else None,
+            "f1": mean(f1s) if f1s else None,
             "overall": mean(overall) if overall else None,
             "similar": mean(1.0 if a.similar else 0.0 for a in anns if a.similar is not None) if anns else None,
             "auto": automatic(output),
@@ -108,6 +115,8 @@ def _per_model(outputs: dict) -> list[dict]:
             "outputs": len(rows),
             "annotations": sum(r["n"] for r in rows),
             "human": avg(r["human"] for r in rows),
+            "unit": avg(r["unit"] for r in rows),
+            "f1": avg(r["f1"] for r in rows),
             "overall": avg(r["overall"] for r in rows),
             "similar": avg(r["similar"] for r in rows),
             "meaning": avg(r["auto"].get("meaning", {}).get("score") for r in rows),
@@ -169,12 +178,18 @@ def _item_level(annotations: list[PeerAnnotation]) -> list[dict]:
 
 def _inter_annotator(by_output: dict) -> dict:
     item_a, item_b, similar_a, similar_b, gaps, pairs = [], [], [], [], [], 0
+    matched_a, matched_b = [], []
     for anns in by_output.values():
         for a, b in combinations(anns, 2):
             pairs += 1
             if a.reference_items == b.reference_items:
                 item_a += a.item_labels
                 item_b += b.item_labels
+            if a.candidate_units and a.candidate_units == b.candidate_units:
+                # Did both find a counterpart in A for this part of B?
+                for j in range(len(a.candidate_units)):
+                    matched_a.append(any(j in links for links in a.item_links))
+                    matched_b.append(any(j in links for links in b.item_links))
             if a.similar is not None and b.similar is not None:
                 similar_a.append(a.similar)
                 similar_b.append(b.similar)
@@ -189,7 +204,14 @@ def _inter_annotator(by_output: dict) -> dict:
         "similar_agreement": _round(sum(x == y for x, y in zip(similar_a, similar_b)) / len(similar_a)) if similar_a else None,
         "similar_kappa": cohen_kappa(similar_a, similar_b),
         "score_gap": _round(mean(gaps)) if gaps else None,
+        "units": len(matched_a),
+        "unit_agreement": _agreement(matched_a, matched_b),
+        "unit_kappa": cohen_kappa(matched_a, matched_b),
     }
+
+
+def _agreement(a: list, b: list) -> float | None:
+    return _round(sum(x == y for x, y in zip(a, b)) / len(a)) if a else None
 
 
 def _reasons(annotations: list[PeerAnnotation]) -> list[dict]:

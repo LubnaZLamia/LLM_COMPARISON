@@ -2,12 +2,20 @@
 from __future__ import annotations
 
 import hashlib
+import re
 
 from django.conf import settings
 from django.db.models import Count
 
 from apps.comparisons.models import ModelOutput, Task
 from apps.comparisons.services.analysis import extract_questions, reference_items
+from apps.comparisons.services.metrics import content_tokens
+
+_LIST_PREFIX = re.compile(r"^\s*(?:[-*•]|\d+[.)])\s*")
+_SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
+# Short openers and sign-offs ("Hi Margaret,", "Best regards,", "[Your Name]") are not content.
+_PLEASANTRY = re.compile(r"^(?:hi|hello|hey|dear|good (?:morning|afternoon|evening)|best|kind regards|warm regards"
+                         r"|regards|warmly|sincerely|thanks|thank you|take care|cheers)\b|^\[.*\]$", re.IGNORECASE)
 
 
 def eligible(task: str = ""):
@@ -29,9 +37,43 @@ def items_for(output: ModelOutput) -> list[str]:
     return reference_items(output.run.task, output.run.reference_text)
 
 
-def candidate_items(output: ModelOutput) -> list[str]:
-    """The model's follow-up questions as a list, so the two sides look alike. Empty for replies."""
-    return extract_questions(output.text) if output.run.task == Task.FOLLOWUP else []
+def _is_unit(text: str) -> bool:
+    if not content_tokens(text):
+        return False
+    short = len(text.split()) <= 5
+    return not (short and (_PLEASANTRY.match(text) or text.endswith(":")))
+
+
+def segments(output: ModelOutput) -> list[list[tuple[int | None, str]]]:
+    """The model's text as paragraphs of (number, text) parts, for display and linking.
+
+    Follow-ups are one question per part. Replies are one sentence per part, with the
+    paragraphs kept so the reply still reads as written. Greetings, sign-offs and
+    headings stay on screen but get no number: nobody links to "Hi Margaret,".
+    """
+    if output.run.task == Task.FOLLOWUP:
+        questions = extract_questions(output.text)
+        if questions:
+            return [[(i, q)] for i, q in enumerate(questions)]
+    paragraphs, n = [], 0
+    for line in output.text.replace("**", "").splitlines():
+        line = _LIST_PREFIX.sub("", line).strip()
+        if not line:
+            continue
+        parts = []
+        for sentence in _SENTENCE_END.split(line):
+            if _is_unit(sentence):
+                parts.append((n, sentence))
+                n += 1
+            else:
+                parts.append((None, sentence))
+        paragraphs.append(parts)
+    return paragraphs
+
+
+def candidate_units(output: ModelOutput) -> list[str]:
+    """The numbered parts of the model's text, in order."""
+    return [text for paragraph in segments(output) for number, text in paragraph if number is not None]
 
 
 def _shuffle_key(annotator: str, pk: int) -> str:

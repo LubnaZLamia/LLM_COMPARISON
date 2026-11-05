@@ -2,8 +2,10 @@
 {% load static marks annotation_extras %}
 {% block title %}Annotation results · LLM Health Assistant{% endblock %}
 
+{% block head %}<link rel="stylesheet" href="{% static 'css/annotate.css' %}?v=6">{% endblock %}
+{% block body_class %}ann-page{% endblock %}
+
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/annotate.css' %}?v=1">
 <div class="page-head">
   <div>
     <a class="small-link" href="{% url 'annotations:home' %}{% if task %}?task={{ task }}{% endif %}">← Annotation home</a>
@@ -31,23 +33,25 @@
   <div class="ann-tile-actions">
     <a class="btn-ghost btn-small" href="{% url 'annotations:download' %}"><svg class="ico"><use href="#i-download"></use></svg>Annotations CSV</a>
     <a class="btn-ghost btn-small" href="{% url 'annotations:download_items' %}"><svg class="ico"><use href="#i-download"></use></svg>Item-level CSV</a>
+    <a class="btn-ghost btn-small" href="{% url 'annotations:download_units' %}"><svg class="ico"><use href="#i-download"></use></svg>Parts of B CSV</a>
   </div>
 </div>
 
 <section class="card table-card ann-section">
   <header class="ann-section-head">
     <h2><svg class="ico"><use href="#i-users"></use></svg>By model</h2>
-    <p class="muted"><b>Items covered</b> is the share of the clinician's items people marked as covered (partly counts half). <b>Overall</b> turns the yes/no answer into a number: no is 0, yes is the middle of the chosen band. The last two columns are the automatic scores for the same outputs.</p>
+    <p class="muted"><b>Items covered</b> is the share of the clinician's items people marked as covered (partly counts half): how much of the clinician's answer the model gave. <b>B in A</b> is the other direction, the share of the model's text that some clinician item points to, and <b>F1</b> combines the two. <b>Overall</b> turns the yes/no answer into a number: no is 0, yes is the middle of the chosen band. The last two columns are the automatic scores for the same outputs.</p>
   </header>
   <div class="table-wrap">
     <table class="data-table">
-      <thead><tr><th>Model</th><th>Outputs</th><th>Annotations</th><th>Items covered</th><th>Overall</th><th>Said similar</th><th>Auto: meaning</th><th>Auto: words</th></tr></thead>
+      <thead><tr><th>Model</th><th>Outputs</th><th>Annotations</th><th>Items covered</th><th>B in A</th><th>F1</th><th>Overall</th><th>Said similar</th><th>Auto: meaning</th><th>Auto: words</th></tr></thead>
       <tbody>
         {% for m in data.models %}
           <tr>
             <td class="nowrap"><span class="mark-cell">{% model_mark m.output size="sm" %}{{ m.name }}</span></td>
             <td>{{ m.outputs }}</td><td>{{ m.annotations }}</td>
-            <td><strong>{{ m.human|pct }}</strong></td><td>{{ m.overall|pct }}</td><td>{{ m.similar|pct }}</td>
+            <td><strong>{{ m.human|pct }}</strong></td><td>{{ m.unit|pct }}</td><td>{{ m.f1|pct }}</td>
+            <td>{{ m.overall|pct }}</td><td>{{ m.similar|pct }}</td>
             <td>{{ m.meaning|pct }}</td><td>{{ m.lexical|pct }}</td>
           </tr>
         {% endfor %}
@@ -97,6 +101,9 @@
         <dt>Same label on a clinician item</dt><dd><strong>{{ data.agreement.item_agreement|pct }}</strong> · kappa {{ data.agreement.item_kappa|num }} <small class="muted">({{ data.agreement.items }} item pairs)</small></dd>
         <dt>Same yes/no on "similar overall"</dt><dd><strong>{{ data.agreement.similar_agreement|pct }}</strong> · kappa {{ data.agreement.similar_kappa|num }}</dd>
         <dt>Mean gap in Items covered</dt><dd>{{ data.agreement.score_gap|pct }}</dd>
+        {% if data.agreement.units %}
+          <dt>Same call on whether a part of B is in A</dt><dd><strong>{{ data.agreement.unit_agreement|pct }}</strong> · kappa {{ data.agreement.unit_kappa|num }} <small class="muted">({{ data.agreement.units }} part pairs)</small></dd>
+        {% endif %}
       </dl>
       <p class="hint">This is the ceiling: a metric can't agree with people more than people agree with each other.</p>
     {% else %}
@@ -116,3 +123,5 @@
 </div>
 {% endif %}
 {% endblock %}
+
+{% block scripts %}<script src="{% static 'js/annotate.js' %}?v=6"></script>{% endblock %}

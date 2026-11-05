@@ -1,7 +1,29 @@
 /* Peer annotation pages. Uses the tokens and base classes from app.css. */
-.ann-context { padding: 0; margin-bottom: 14px; }
-.ann-context summary { padding: 11px 16px; cursor: pointer; color: var(--muted); font-size: 13.5px; }
-.ann-context summary:hover { color: var(--accent); }
+/* The patient: message and chart, above A and B */
+.ann-context { padding: 0; margin-bottom: 16px; overflow: hidden; }
+.ann-context > summary { display: flex; align-items: center; gap: 9px; padding: 11px 16px; cursor: pointer; font-size: 14px; border-bottom: 1px solid var(--border); }
+.ann-context:not([open]) > summary { border-bottom: 0; }
+.ann-context > summary:hover b { color: var(--accent); }
+.ann-context > summary .ico { width: 16px; height: 16px; color: var(--accent); flex: none; }
+.ann-ctx-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+.ann-ctx-body h3 { margin: 0 0 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.ann-ctx-msg { padding: 14px 16px; border-right: 1px solid var(--border); }
+.ann-ctx-msg blockquote { margin: 0; padding-left: 12px; border-left: 3px solid var(--accent-line); font-family: var(--serif); font-size: 15.5px; line-height: 1.55; }
+.ann-ctx-msg blockquote p { margin: 0 0 8px; }
+/* The chart is as tall as the message beside it (at least 280px) and scrolls inside. */
+.ann-ctx-chart { position: relative; min-height: 280px; background: var(--sunken); font-size: 13px; }
+.ann-ctx-scroll { position: absolute; inset: 0; overflow: auto; padding: 14px 16px; }
+.ann-ctx-chart.is-empty { min-height: 0; }
+.ann-ctx-chart.is-empty .ann-ctx-scroll { position: static; }
+.ann-ctx-note { margin: -2px 0 10px; font-size: 12.5px; color: var(--muted); }
+.ann-chart-sec + .ann-chart-sec { margin-top: 12px; }
+.ann-chart-sec h4 { margin: 0 0 5px; font-size: 13px; }
+.ann-chart-group { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 4px 0; }
+.ann-chart-label { color: var(--muted); font-size: 12px; font-weight: 600; }
+.ann-chart-items { display: flex; flex-wrap: wrap; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.ann-chart-items li { padding: 1px 8px; border: 1px solid var(--border); border-radius: 99px; background: var(--card); font-size: 12.5px; }
+.ann-more { margin-top: 4px; width: 100%; }
+.ann-more > summary { cursor: pointer; color: var(--accent); font-size: 12.5px; margin-bottom: 4px; }
 
 /* Home */
 .ann-start { margin-bottom: 16px; }
@@ -14,8 +36,12 @@
 .ann-progress-text { font-size: 14px; margin-bottom: 8px; }
 .ann-bar { display: block; height: 8px; background: var(--sunken); border-radius: 99px; overflow: hidden; flex: 1; }
 .ann-bar > span { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
-.ann-start-actions { margin-top: 14px; }
 .ann-go { width: auto; padding: 11px 22px; }
+.ann-start-actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+
+/* Back: the undo arrow is the refresh icon, mirrored */
+.ann-back-ico { transform: scaleX(-1); }
+.ann-kbd { margin-left: 6px; }
 
 /* Item page: A and B side by side */
 .ann-compare { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 16px; align-items: start; margin-bottom: 16px; }
@@ -31,24 +57,65 @@
 .ann-key { display: grid; gap: 3px; padding: 10px 16px; font-size: 12.5px; color: var(--muted); background: var(--sunken); border-bottom: 1px solid var(--border); }
 .ann-key b { color: var(--text); font-weight: 600; margin-right: 4px; }
 .ann-items { list-style: none; margin: 0; padding: 0; }
-.ann-item { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 4px 10px; padding: 11px 16px; border-bottom: 1px solid var(--border); }
+/* One item in A is active: the keys answer it and clicks in B link to it. */
+.ann-item { position: relative; display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 4px 10px; padding: 11px 16px; border-bottom: 1px solid var(--border); outline: 0; transition: background .2s ease; }
 .ann-item:last-child { border-bottom: 0; }
+.ann-item::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); transform: scaleY(0); transition: transform .22s cubic-bezier(.2, .8, .2, 1); }
+.ann-item.is-active { background: linear-gradient(90deg, rgba(42, 109, 244, .06), rgba(42, 109, 244, 0) 70%); }
+.ann-item.is-active::before { transform: scaleY(1); }
 .ann-item.has-error { background: var(--danger-soft); }
-.ann-num { width: 24px; height: 24px; border-radius: 50%; background: var(--sunken); color: var(--muted); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+.ann-item.is-echo { background: #fffbeb; }
+.ann-num { width: 24px; height: 24px; border-radius: 50%; background: var(--sunken); color: var(--muted); font-size: 12px; font-weight: 600; display: grid; place-items: center; transition: background .2s, color .2s, box-shadow .2s; }
+.ann-item.is-active .ann-num { box-shadow: inset 0 0 0 1.5px var(--accent); color: var(--accent-dark); }
+.ann-item.is-yes .ann-num { background: var(--good-soft); color: var(--good); box-shadow: inset 0 0 0 1px #75e0a7; }
+.ann-item.is-partly .ann-num { background: var(--warn-soft); color: var(--warn); box-shadow: inset 0 0 0 1px #fec84b; }
+.ann-item.is-no .ann-num { background: var(--danger-soft); color: var(--danger); box-shadow: inset 0 0 0 1px #fda29b; }
 .ann-item-text { margin: 2px 0 0; font-size: 14px; }
 .ann-choice { grid-column: 2; display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
 .ann-pill { position: relative; cursor: pointer; }
 .ann-pill input, .ann-option input, .ann-reason input { position: absolute; opacity: 0; pointer-events: none; }
-.ann-pill span { display: inline-block; padding: 4px 11px; border-radius: 99px; border: 1px solid var(--border-strong); font-size: 12.5px; color: var(--muted); background: var(--card); transition: background .12s, border-color .12s; }
+.ann-pill span { display: inline-block; padding: 4px 11px; border-radius: 99px; border: 1px solid var(--border-strong); font-size: 12.5px; color: var(--muted); background: var(--card); transition: background .15s, border-color .15s, color .15s, transform .12s; user-select: none; }
+.ann-pill:active span, .ann-option:active span, .ann-link:active span { transform: scale(.96); }
 .ann-pill:hover span { border-color: var(--accent-line); color: var(--text); }
 .ann-pill input:focus-visible + span, .ann-option input:focus-visible + span, .ann-reason input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
 .ann-pill-yes input:checked + span { background: var(--good-soft); border-color: #75e0a7; color: var(--good); font-weight: 600; }
 .ann-pill-partly input:checked + span { background: var(--warn-soft); border-color: #fec84b; color: var(--warn); font-weight: 600; }
 .ann-pill-no input:checked + span { background: var(--danger-soft); border-color: #fda29b; color: var(--danger); font-weight: 600; }
+.ann-b-hint { margin: 0; padding: 8px 16px; font-size: 12.5px; color: var(--muted); background: var(--sunken); border-bottom: 1px solid var(--border); transition: background .25s, color .25s; position: sticky; top: 0; z-index: 1; }
+.ann-side-b.is-linking .ann-b-hint { background: var(--accent-soft); color: var(--accent-dark); font-weight: 500; }
 .ann-b-text { padding: 12px 16px 14px; font-size: 14px; }
-.ann-b-text ol { margin: 0; padding-left: 22px; }
-.ann-b-text li { margin: 5px 0; }
 .ann-b-text p { margin: 0 0 10px; }
+.ann-b-text p:last-child { margin-bottom: 0; }
+
+/* B in numbered parts. A part's number turns green once an item in A points to it, and
+   once every item is answered, the numbers of the parts nothing points to go hollow. */
+.ann-unit { border-radius: 6px; padding: 1px 2px; transition: background .18s, box-shadow .18s; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.ann-side-b.is-linking .ann-unit { cursor: pointer; }
+.ann-side-b.is-linking .ann-unit:hover { background: var(--accent-soft); box-shadow: 0 0 0 1px var(--accent-line); }
+.ann-unit.is-mine, .ann-side-b.is-linking .ann-unit.is-mine:hover { background: #e3edff; box-shadow: 0 0 0 1px var(--accent); }
+.ann-unit.is-echo { background: #fff1bf; box-shadow: 0 0 0 1px #fcd34d; }
+.ann-unit-num { display: inline-grid; place-items: center; min-width: 19px; height: 19px; padding: 0 5px; margin-right: 5px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-dark); font-size: 11px; font-weight: 700; vertical-align: 1px; transition: background .2s, color .2s, box-shadow .2s; }
+.ann-unit-links { margin-left: 5px; font-size: 11px; font-weight: 700; color: var(--good); white-space: nowrap; }
+.ann-unit.is-matched .ann-unit-num { background: var(--good); color: #fff; }
+.ann-unit.is-unmatched .ann-unit-num { background: var(--card); color: var(--muted); box-shadow: inset 0 0 0 1px var(--faint); }
+.ann-unit.is-hot { background: #fff1bf; box-shadow: 0 0 0 2px #fcd34d; }
+.ann-plain { color: var(--muted); }
+.ann-b-list .ann-para { display: block; margin: 0 0 6px; }
+.ann-b-list .ann-unit { display: flex; align-items: baseline; padding: 3px 4px; }
+.ann-b-list .ann-unit-num { flex: none; }
+.ann-b-list .ann-unit-text { flex: 1; }
+
+/* "Where in B?" under an item in A: slides open for Covered and Partly */
+.ann-links { grid-column: 2; display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .26s cubic-bezier(.2, .8, .2, 1), opacity .2s ease, margin-top .26s; }
+.ann-links.is-open { grid-template-rows: 1fr; opacity: 1; margin-top: 6px; }
+.ann-links-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-height: 0; overflow: hidden; padding: 2px; }
+.ann-links-q { font-size: 12px; color: var(--muted); margin-right: 4px; }
+.ann-link { position: relative; cursor: pointer; }
+.ann-link input { position: absolute; opacity: 0; pointer-events: none; }
+.ann-link span { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 0 6px; border-radius: 7px; border: 1px solid var(--border-strong); background: var(--card); color: var(--muted); font-size: 12px; font-weight: 600; transition: background .15s, border-color .15s, color .15s, transform .12s; user-select: none; }
+.ann-link:hover span { border-color: var(--accent-line); color: var(--text); }
+.ann-link input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ann-link input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* Overall questions */
 .ann-step { margin-bottom: 14px; }
@@ -57,15 +124,16 @@
 .ann-sub { margin: -4px 0 10px; font-size: 13px; }
 .ann-row { display: flex; gap: 8px; flex-wrap: wrap; }
 .ann-option { position: relative; cursor: pointer; }
-.ann-option span { display: inline-block; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--card); font-size: 13.5px; transition: background .12s, border-color .12s; }
+.ann-option span { display: inline-block; padding: 8px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--card); font-size: 13.5px; transition: background .15s, border-color .15s, color .15s, transform .12s; user-select: none; }
 .ann-option:hover span { border-color: var(--accent-line); }
 .ann-option input:checked + span { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-dark); font-weight: 600; }
 .ann-option-big span { min-width: 90px; text-align: center; font-weight: 600; }
 .ann-branch { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--border); }
+.ann-branch:not([hidden]), .ann-other:not([hidden]) { animation: ann-in .24s cubic-bezier(.2, .8, .2, 1); }
 .ann-q { margin: 0 0 8px; font-weight: 600; font-size: 14px; }
 .ann-reasons { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px; }
 .ann-reason { position: relative; cursor: pointer; }
-.ann-reason > span { display: grid; gap: 2px; height: 100%; padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--card); font-size: 13.5px; }
+.ann-reason > span { display: grid; gap: 2px; height: 100%; padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-strong); background: var(--card); font-size: 13.5px; transition: background .15s, border-color .15s; }
 .ann-reason small { color: var(--muted); font-size: 12px; }
 .ann-reason:hover > span { border-color: var(--accent-line); }
 .ann-reason input:checked + span { background: var(--accent-soft); border-color: var(--accent); }
@@ -75,6 +143,55 @@
 .ann-err { margin: 6px 0 0; font-size: 13px; }
 .ann-comment { margin: 14px 0 0; }
 .ann-comment textarea { width: 100%; }
+
+/* The sticky save bar: a map of the items (click to jump), what's left, keys, save */
+.ann-savebar { transition: box-shadow .25s, border-color .25s; }
+.ann-savebar.has-problem { border-color: #fda29b; box-shadow: var(--shadow-lift), 0 0 0 3px rgba(240, 68, 56, .12); }
+.ann-savebar.has-problem .progress-note { color: var(--danger); font-weight: 600; }
+.ann-savebar.is-saving button { pointer-events: none; }
+.ann-bar-left { display: grid; gap: 6px; flex: 1 1 280px; min-width: 0; }
+.ann-bar-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ann-map { display: flex; align-items: center; gap: 3px; min-width: 0; }
+.ann-map-seg { flex: 0 1 26px; min-width: 6px; height: 8px; padding: 0; border: 0; border-radius: 99px; background: var(--border-strong); cursor: pointer; transition: background .25s, transform .15s, box-shadow .2s, opacity .2s; }
+.ann-map-seg:hover { transform: scaleY(1.6); }
+.ann-map-seg.is-yes { background: #32d583; }
+.ann-map-seg.is-partly { background: #fdb022; }
+.ann-map-seg.is-no { background: #f97066; }
+.ann-map-seg.needs-link { opacity: .4; }
+.ann-map-seg.is-active { box-shadow: 0 0 0 2px var(--card), 0 0 0 3.5px var(--accent); }
+.ann-map-gap { flex: none; width: 6px; }
+.ann-map-step { flex: none; padding: 1px 9px; border: 1px solid var(--border-strong); border-radius: 99px; background: var(--card); color: var(--muted); font: inherit; font-size: 11.5px; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+.ann-map-step:hover { border-color: var(--accent-line); color: var(--text); }
+.ann-map-step.is-done { background: var(--good-soft); border-color: #abefc6; color: var(--good); }
+.ann-map-step.is-done::before { content: "✓ "; }
+.ann-draft-note { font-size: 12.5px; color: var(--muted); }
+.ann-linkbtn { padding: 0; border: 0; background: none; color: var(--accent); font: inherit; cursor: pointer; }
+.ann-linkbtn:hover { text-decoration: underline; }
+.ann-hints { display: inline-flex; align-items: center; gap: 3px; margin-right: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.ann-hints kbd, .ann-kbd { padding: 1px 5px; border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 5px; background: var(--sunken); color: var(--muted); font: 600 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.ann-dot { margin: 0 3px; color: var(--faint); }
+.ann-save.is-busy svg { animation: ann-spin .8s linear infinite; }
+
+/* Motion. Everything here is decoration, and it all goes away with reduced motion. */
+@keyframes ann-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@keyframes ann-pop { 0% { transform: scale(1); } 40% { transform: scale(1.28); } 100% { transform: scale(1); } }
+@keyframes ann-nudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+@keyframes ann-ring { 0% { box-shadow: 0 0 0 0 rgba(240, 68, 56, .45); } 100% { box-shadow: 0 0 0 12px rgba(240, 68, 56, 0); } }
+@keyframes ann-glow { 0% { box-shadow: 0 0 0 0 rgba(42, 109, 244, .35); } 100% { box-shadow: 0 0 0 12px rgba(42, 109, 244, 0); } }
+@keyframes ann-spin { to { transform: rotate(360deg); } }
+@keyframes ann-out { to { opacity: 0; transform: translateY(-6px); } }
+.is-pop { animation: ann-pop .3s cubic-bezier(.2, .8, .2, 1); }
+.is-nudge { animation: ann-nudge .32s ease-in-out; }
+.is-missing { animation: ann-ring .9s ease-out 2; }
+.is-flash { animation: ann-glow .9s ease-out; }
+/* Notes after a save float in the corner instead of pushing the page down, then fade. */
+.ann-page .flash-stack { position: fixed; top: 92px; right: 20px; z-index: 50; width: min(360px, calc(100vw - 32px)); margin: 0; cursor: pointer; animation: ann-toast .4s cubic-bezier(.2, .8, .2, 1); }
+.ann-page .flash-stack .flash { box-shadow: var(--shadow-lift); }
+@keyframes ann-toast { from { opacity: 0; transform: translateY(-8px) scale(.98); } to { opacity: 1; transform: none; } }
+.flash-stack.is-leaving { animation: ann-out .35s ease forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .ann-context *, #ann-form, #ann-form *, .ann-page .flash-stack { transition: none !important; animation: none !important; }
+}
 
 /* Results */
 .ann-tiles { display: flex; gap: 12px; flex-wrap: wrap; align-items: stretch; margin-bottom: 16px; }
@@ -96,9 +213,13 @@
 .ann-reason-n { text-align: right; color: var(--muted); }
 
 @media (max-width: 900px) {
-  .ann-compare, .ann-two { grid-template-columns: 1fr; }
+  .ann-compare, .ann-two, .ann-ctx-body { grid-template-columns: 1fr; }
+  .ann-ctx-msg { border-right: 0; border-bottom: 1px solid var(--border); }
+  .ann-ctx-chart { min-height: 0; }
+  .ann-ctx-scroll { position: static; max-height: 380px; }
   .ann-side-b { position: static; max-height: none; order: -1; }
   .ann-reason-bars li { grid-template-columns: 120px 1fr 30px; }
 }
+@media (max-width: 1100px) { .ann-hints { display: none; } }
 .ann-item-err { grid-column: 2; margin: 2px 0 0; }
 .ann-note { padding: 0 16px 12px; margin: 0; }

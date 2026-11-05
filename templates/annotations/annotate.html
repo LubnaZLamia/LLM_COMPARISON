@@ -2,8 +2,10 @@
 {% load static %}
 {% block title %}Annotate item #{{ output.pk }} · LLM Health Assistant{% endblock %}
 
+{% block head %}<link rel="stylesheet" href="{% static 'css/annotate.css' %}?v=6">{% endblock %}
+{% block body_class %}ann-page{% endblock %}
+
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/annotate.css' %}?v=1">
 {% with noun=is_followup|yesno:"question,point" verb=is_followup|yesno:"ask,say" %}
 <div class="page-head">
   <div>
@@ -13,16 +15,55 @@
     <p>Annotating as <strong>{{ annotator }}</strong> · {{ progress.mine }} of {{ progress.total }} done{% if existing %} · you've annotated this one before, and saving will update it{% endif %}</p>
   </div>
   <div class="actions">
+    {% if can_go_back %}<a class="btn-ghost" id="ann-back" href="{% url 'annotations:back' %}?from={{ output.pk }}{% if task %}&task={{ task }}{% endif %}" title="Go back to the previous item (Ctrl+Z / ⌘Z)"><svg class="ico ann-back-ico"><use href="#i-refresh"></use></svg>Back<kbd class="ann-kbd">Ctrl+Z</kbd></a>{% endif %}
     <a class="btn-ghost" href="{% url 'annotations:next' %}?skip={{ output.pk }}{% if task %}&task={{ task }}{% endif %}" title="Leave this one for later"><svg class="ico"><use href="#i-refresh"></use></svg>Skip</a>
   </div>
 </div>
 
-<details class="card ann-context">
-  <summary>The patient's message, for context (optional)</summary>
-  <div class="patient-quote">"{{ run.message_text }}"</div>
+<details class="card ann-context" data-run="{{ run.pk }}" open>
+  <summary>
+    <svg class="ico"><use href="#i-message"></use></svg>
+    <span><b>The patient</b> <span class="muted">· A and B are both {% if is_followup %}follow-up questions for{% else %}replies to{% endif %} this message</span></span>
+  </summary>
+  <div class="ann-ctx-body">
+    <div class="ann-ctx-msg">
+      <h3>What the patient wrote</h3>
+      <blockquote>{{ patient.message|linebreaks }}</blockquote>
+    </div>
+    <div class="ann-ctx-chart{% if not patient.chart %} is-empty{% endif %}"><div class="ann-ctx-scroll">
+      <h3>From their chart</h3>
+      {% if patient.chart_sections %}
+        <p class="ann-ctx-note">{% if patient.chart_sent %}The AI was given this summary with the message.{% else %}From the dataset. The AI was not given this summary for this run.{% endif %}</p>
+        {% for section in patient.chart_sections %}
+          <div class="ann-chart-sec">
+            {% if section.title %}<h4>{{ section.title }}</h4>{% endif %}
+            {% for group in section.groups %}
+              <div class="ann-chart-group">
+                {% if group.label %}<span class="ann-chart-label">{{ group.label }}</span>{% endif %}
+                {% if group.items|length == 1 %}
+                  <span>{{ group.items.0 }}</span>
+                {% else %}
+                  <ul class="ann-chart-items">{% for entry in group.items|slice:":12" %}<li>{{ entry }}</li>{% endfor %}</ul>
+                  {% if group.items|length > 12 %}
+                    <details class="ann-more"><summary>{{ group.items|length|add:"-12" }} more</summary>
+                      <ul class="ann-chart-items">{% for entry in group.items|slice:"12:" %}<li>{{ entry }}</li>{% endfor %}</ul>
+                    </details>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      {% elif patient.chart %}
+        <div class="pre">{{ patient.chart }}</div>
+      {% else %}
+        <p class="muted ann-ctx-note">No chart summary for this message. The message is all the AI was given.</p>
+      {% endif %}
+    </div></div>
+  </div>
 </details>
 
-<form method="post" id="ann-form" novalidate>
+<form method="post" id="ann-form" data-draft-key="{{ annotator|lower }}:{{ output.pk }}" novalidate>
   {% csrf_token %}
   <input type="hidden" name="task" value="{{ task }}">
   {{ form.seconds }}
@@ -38,10 +79,11 @@
         <span><b>Covered</b> B {{ verb }}s this too, in its own words or as part of a broader {{ noun }}.</span>
         <span><b>Partly</b> B touches on this, but not fully.</span>
         <span><b>Not covered</b> This doesn't seem to appear in B.</span>
+        {% if form.units %}<span><b>Then</b> click the parts of B that say it, or tick their numbers.</span>{% endif %}
       </div>
       <ol class="ann-items">
-        {% for number, text, field in form.item_rows %}
-          <li class="ann-item{% if field.errors %} has-error{% endif %}">
+        {% for number, text, field, links in form.item_rows %}
+          <li class="ann-item{% if field.errors or links.errors %} has-error{% endif %}" data-item="{{ forloop.counter0 }}" tabindex="-1">
             <span class="ann-num">{{ number }}</span>
             <p class="ann-item-text">{{ text }}</p>
             <div class="ann-choice" role="radiogroup" aria-label="Item {{ number }}">
@@ -50,6 +92,17 @@
               {% endfor %}
             </div>
             {% for e in field.errors %}<p class="text-error ann-err ann-item-err">{{ e }}</p>{% endfor %}
+            {% if form.units %}
+              <div class="ann-links{% if field.value == "yes" or field.value == "partly" %} is-open{% endif %}">
+                <div class="ann-links-inner">
+                  <span class="ann-links-q">Where in B?</span>
+                  {% for cb in links %}
+                    <label class="ann-link" data-unit="{{ cb.data.value }}">{{ cb.tag }}<span>{{ cb.choice_label }}</span></label>
+                  {% endfor %}
+                </div>
+              </div>
+              {% for e in links.errors %}<p class="text-error ann-err ann-item-err">{{ e }}</p>{% endfor %}
+            {% endif %}
           </li>
         {% endfor %}
       </ol>
@@ -61,9 +114,12 @@
         <div><h2>The AI's answer</h2>
           <p class="muted"><svg class="ico"><use href="#i-eye-off"></use></svg> Model name hidden</p></div>
       </header>
-      <div class="ann-b-text">
-        {% if candidate_items %}
-          <ol>{% for q in candidate_items %}<li>{{ q }}</li>{% endfor %}</ol>
+      {% if form.units %}<p class="ann-b-hint" id="ann-b-hint" aria-live="polite">Mark an item in A as Covered or Partly, then click where B says it.</p>{% endif %}
+      <div class="ann-b-text{% if is_followup %} ann-b-list{% endif %}">
+        {% if form.units %}
+          {% for paragraph in segments %}
+            <p class="ann-para">{% for number, text in paragraph %}{% if number is None %}<span class="ann-plain">{{ text }}</span>{% else %}<span class="ann-unit" data-unit="{{ number }}"><span class="ann-unit-num">{{ number|add:1 }}</span><span class="ann-unit-text">{{ text }}</span><span class="ann-unit-links"></span></span>{% endif %}{% if not forloop.last %} {% endif %}{% endfor %}</p>
+          {% endfor %}
         {% else %}
           {{ output.text|linebreaks }}
         {% endif %}
@@ -71,7 +127,7 @@
     </section>
   </div>
 
-  <section class="card ann-step{% if form.similar.errors or form.coverage.errors or form.reasons.errors or form.other_reason.errors %} has-error{% endif %}">
+  <section class="card ann-step{% if form.similar.errors or form.coverage.errors or form.reasons.errors or form.other_reason.errors %} has-error{% endif %}" id="ann-step-similar">
     <h3><span class="step-dot">2</span>Overall, would you say A and B are similar?</h3>
     <p class="ann-tally muted" id="ann-tally" hidden></p>
     <div class="ann-row">
@@ -104,19 +160,8 @@
     </div>
   </section>
 
-  <section class="card ann-step{% if form.extra.errors %} has-error{% endif %}">
-    <h3><span class="step-dot">3</span>Is there anything in B that isn't in A?</h3>
-    <p class="muted ann-sub">Extra {{ noun }}s or content in B that A doesn't include.</p>
-    <div class="ann-row">
-      {% for radio in form.extra %}
-        <label class="ann-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
-      {% endfor %}
-    </div>
-    {% for e in form.extra.errors %}<p class="text-error ann-err">{{ e }}</p>{% endfor %}
-  </section>
-
-  <section class="card ann-step{% if form.confidence.errors %} has-error{% endif %}">
-    <h3><span class="step-dot">4</span>How confident do you feel about this one?</h3>
+  <section class="card ann-step{% if form.confidence.errors %} has-error{% endif %}" id="ann-step-confidence">
+    <h3><span class="step-dot">3</span>How confident do you feel about this one?</h3>
     <div class="ann-row">
       {% for radio in form.confidence %}
         <label class="ann-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
@@ -126,15 +171,25 @@
     <label class="field ann-comment"><span>Comment (optional)</span>{{ form.comment }}</label>
   </section>
 
-  <div class="rate-actions">
-    <span class="progress-note" id="ann-progress" data-total="{{ form.items|length }}">0 of {{ form.items|length }} items answered</span>
-    <div class="actions">
+  <div class="rate-actions ann-savebar" id="ann-bar">
+    <div class="ann-bar-left">
+      <div class="ann-map" role="group" aria-label="Jump to a question">
+        {% for number, text, field, links in form.item_rows %}<button type="button" class="ann-map-seg" data-item="{{ forloop.counter0 }}" title="Item {{ number }}: {{ text|truncatechars:90 }}" aria-label="Item {{ number }}"></button>{% endfor %}
+        <span class="ann-map-gap"></span>
+        <button type="button" class="ann-map-step" data-step="ann-step-similar">Overall</button>
+        <button type="button" class="ann-map-step" data-step="ann-step-confidence">Confidence</button>
+      </div>
+      <span class="progress-note" id="ann-progress" data-total="{{ form.items|length }}" aria-live="polite">0 of {{ form.items|length }} items answered</span>
+      <span class="ann-draft-note" id="ann-draft-note" hidden>Picked up your unsaved answers · <button type="button" class="ann-linkbtn" id="ann-draft-discard">Start over</button></span>
+    </div>
+    <div class="ann-bar-right">
+      <span class="ann-hints" aria-hidden="true"><kbd>C</kbd><kbd>P</kbd><kbd>N</kbd> answer <span class="ann-dot">·</span> <kbd>J</kbd><kbd>K</kbd> move <span class="ann-dot">·</span> <kbd class="ann-mod">Ctrl</kbd><kbd>↵</kbd> save</span>
       <button class="btn-ghost" type="submit" name="then" value="home">Save and stop</button>
-      <button class="btn-primary" type="submit"><svg class="ico"><use href="#i-check"></use></svg>Save and next</button>
+      <button class="btn-primary ann-save" type="submit"><svg class="ico"><use href="#i-check"></use></svg><span>Save and next</span></button>
     </div>
   </div>
 </form>
 {% endwith %}
 {% endblock %}
 
-{% block scripts %}<script src="{% static 'js/annotate.js' %}?v=1"></script>{% endblock %}
+{% block scripts %}<script src="{% static 'js/annotate.js' %}?v=6"></script>{% endblock %}
