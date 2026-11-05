@@ -3,7 +3,8 @@
 Model outputs live in each person's own db.sqlite3, which git does not track.
 To give everyone the same outputs to annotate, one person exports their runs to
 exports/runs.csv, exports/outputs.csv and exports/ratings.csv, and everyone else
-loads them with:
+loads them with the command below. Peer annotations come along from
+exports/annotations/*.csv, which export_annotations writes, one file per annotator.
 
     python manage.py import_exports                 # reads ./exports
     python manage.py import_exports --dir other/    # or another folder
@@ -14,7 +15,8 @@ Safe to run again (run.bat and run.sh do, on every start):
   * run, output and rating ids from the files are kept when they are free, so
     links such as /runs/27/ point at the same run on every machine;
   * outputs with no stored clinician-match score get the word-overlap score,
-    computed here for free. Nothing calls a model.
+    computed here for free. Nothing calls a model;
+  * of two versions of a peer annotation, the newer one wins.
 """
 from __future__ import annotations
 
@@ -26,6 +28,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
+from apps.annotations.services import sharing
 from apps.comparisons.models import ComparisonRun, ModelOutput, Task
 from apps.comparisons.services.analysis import ground_truth_for_questions, ground_truth_for_response
 from apps.dataset.models import PatientMessage
@@ -197,6 +200,12 @@ class Command(BaseCommand):
                         HumanRating.objects.filter(pk=rating.pk).update(created_at=when(row["created_at"]))
                     ratings += 1
 
+        shared = sharing.load(folder / "annotations")
         self.stdout.write(self.style.SUCCESS(
             f"Exports: {new_runs} new run(s), {kept_runs} already here; {new_outputs} output(s) added"
-            f" ({scored} given a word-overlap score); {ratings} rating(s) added."))
+            f" ({scored} given a word-overlap score); {ratings} rating(s) added;"
+            f" {shared['new']} annotation(s) added, {shared['updated']} updated."))
+        if shared["unmatched"] or shared["bad"]:
+            self.stdout.write(self.style.WARNING(
+                f"Skipped {shared['unmatched']} annotation(s) for outputs not in this database"
+                f" and {shared['bad']} damaged row(s)."))

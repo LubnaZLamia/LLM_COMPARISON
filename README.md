@@ -173,6 +173,18 @@ in `exports/` (`runs.csv`, `outputs.csv`, `ratings.csv`). `run.bat` / `run.sh` l
 exported ids are kept when free so `/runs/27/` is the same run everywhere, and outputs without a stored
 clinician-match score get the word-overlap score. It calls no model, so it costs nothing.
 
+Annotations are shared the same way, with one file per person so two people never edit the same file:
+
+```bat
+python manage.py export_annotations                     REM writes exports/annotations/<your-name>.csv
+python manage.py export_annotations --annotator "Sam"   REM just one person
+```
+
+Commit the file and push. Everyone else gets it from `import_exports` on their next start, and the queue then offers
+them those outputs first, so a second annotation (and agreement between people) fills in. Rows find their output by a
+fingerprint of the run's time and task and the model's name and text, so differing ids don't matter. Of two versions
+of an annotation the newer wins, nothing is deleted, and damaged rows are counted and skipped.
+
 The queue gives each output to `ANNOTATION_TARGET` people (default 2) before it opens new ones, so inter-annotator
 agreement fills in early; *Skip* leaves an item for later.
 
