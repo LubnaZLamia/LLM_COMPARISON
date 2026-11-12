@@ -32,7 +32,7 @@ Switch the task to **Generate General Response** if asked about the second task 
 | What you see | What to do |
 |---|---|
 | One model card says **Request failed** | Press **Retry failed** above the cards. It re-runs only that model and merges the answer into the same run. Rate limits are already retried 3× automatically. |
-| Everything fails with **401** | The API key in `.env` is wrong or out of credit. Say so and switch to a saved run from the **Rate → View run** list — the old runs are all still there. |
+| Everything fails with **401** | The API key in `.env` is wrong or out of credit. Say so and open a saved run instead: find its number on the **Rate** page and go to `http://127.0.0.1:8000/runs/<number>/` — the old runs are all still there. |
 | It hangs for more than a minute | Reload the page; the run may already have been saved. Check `/rate/` for the newest run number. |
 | No internet at the venue | Set `LLM_MOCK_MODE=true` in `.env` and restart — the whole app works with canned answers, and past runs still render. |
 
