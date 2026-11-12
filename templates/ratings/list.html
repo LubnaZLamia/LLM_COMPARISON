@@ -56,7 +56,6 @@
             {% if run.answered %}
               <a class="btn-ghost btn-small" href="{% url 'ratings:rate' run.pk %}"><svg class="ico"><use href="#i-{% if run.mine %}pencil{% else %}star{% endif %}"></use></svg>{% if run.mine %}Edit my rating{% else %}Rate this run{% endif %}</a>
             {% else %}<span class="muted">no outputs to rate</span>{% endif %}
-            <a class="small-link" href="{% url 'comparisons:run' run.pk %}">View run</a>
           </td>
         </tr>
       {% empty %}
